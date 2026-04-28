@@ -1,0 +1,89 @@
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from "react";
+
+import { authService } from "@/services/authService";
+
+interface AuthContextType {
+  user: any;
+  userRole: string | null;
+  loading: boolean;
+  isAuthenticated: boolean;
+  setUser: (user: any) => void;
+  logout: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextType | null>(null);
+
+export function AuthProvider({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  const [user, setUser] = useState<any>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const loadUser = async () => {
+    const token = localStorage.getItem("auth_token");
+
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const data = await authService.me();
+
+      setUser(data);
+      setUserRole(data.role || null);
+    } catch {
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("auth_user");
+    }
+
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    loadUser();
+  }, []);
+
+  const logout = async () => {
+    try {
+      await authService.logout();
+    } catch {}
+
+    setUser(null);
+    setUserRole(null);
+  };
+
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        userRole,
+        loading,
+        isAuthenticated: !!user,
+        setUser,
+        logout,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export function useAuth() {
+  const ctx = useContext(AuthContext);
+
+  if (!ctx) {
+    throw new Error("useAuth must be inside AuthProvider");
+  }
+
+  return ctx;
+}
