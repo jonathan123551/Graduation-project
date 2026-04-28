@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import type { User, Session } from "@supabase/supabase-js";
+
+type User = any;
+type Session = any;
 
 interface AuthContextType {
   user: User | null;
@@ -19,44 +20,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+    const token = localStorage.getItem("token");
+    const storedUser = localStorage.getItem("user");
 
-        if (session?.user) {
-          // Fetch role - use setTimeout to avoid Supabase deadlock
-          setTimeout(async () => {
-            const { data } = await supabase
-              .from("user_roles")
-              .select("role")
-              .eq("user_id", session.user.id)
-              .maybeSingle();
-            setUserRole(data?.role ?? null);
-            setLoading(false);
-          }, 0);
-        } else {
-          setUserRole(null);
-          setLoading(false);
-        }
-      }
-    );
+    if (token && storedUser) {
+      setUser(JSON.parse(storedUser));
+      setSession({ token });
+      setUserRole(JSON.parse(storedUser)?.role || null);
+    }
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (!session) setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    setLoading(false);
   }, []);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+
+    setUser(null);
+    setSession(null);
+    setUserRole(null);
+
+    window.location.href = "/";
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, userRole, signOut }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        session,
+        loading,
+        userRole,
+        signOut,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

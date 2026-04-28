@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useLanguage } from "@/i18n/LanguageContext";
-import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
+import api from "@/lib/api";import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
@@ -18,17 +17,36 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
+  e.preventDefault();
+  setLoading(true);
 
-    if (error) {
-      toast({ title: t.common.error, description: error.message, variant: "destructive" });
-    } else {
-      navigate("/dashboard");
-    }
-  };
+  try {
+    const res = await api.post("/login", {
+      email,
+      password,
+    });
+
+    localStorage.setItem("token", res.data.token);
+    localStorage.setItem("user", JSON.stringify(res.data.user));
+
+    toast({
+      title: "Success",
+      description: "Logged in successfully",
+    });
+
+    navigate("/dashboard");
+    window.location.reload();
+  } catch (error: any) {
+    toast({
+      title: t.common.error,
+      description:
+        error?.response?.data?.message || "Invalid credentials",
+      variant: "destructive",
+    });
+  }
+
+  setLoading(false);
+};
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4">
