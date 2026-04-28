@@ -56,7 +56,7 @@ class MessageController extends Controller
             'message' => 'Marked as read'
         ]);
     }
-
+        //test
     public function conversations(Request $request)
     {
         $myId = $request->user()->id;
