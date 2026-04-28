@@ -80,5 +80,6 @@ class AccessRequestController extends Controller
         return response()->json([
             'message' => 'Rejected'
         ]);
-    }
+  
+        }
 }

@@ -49,6 +49,7 @@ class ProfileController extends Controller
         return response()->json($profile);
     }
 
+    
     public function gate(Request $request)
     {
         $user = $request->user();
