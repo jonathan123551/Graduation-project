@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class Idea extends Model
+class Deal extends Model
 {
     use HasFactory;
 
@@ -13,40 +13,32 @@ class Idea extends Model
     public $incrementing = false;
 
     protected $fillable = [
+        'idea_id',
+        'investor_id',
         'founder_id',
-        'title',
-        'description',
-        'sector',
-        'location',
-        'capital_required',
-        'capital_required_usd',
-        'ai_score',
-        'risk_score',
-        'market_score',
+        'amount',
+        'equity_percentage',
         'status',
-        'decision',
-        'pitch_deck_url',
-        'evaluation_version',
-        'ai_evaluation'
+        'terms',
+        'accepted_at'
     ];
+
+    protected $casts = [
+        'accepted_at' => 'datetime'
+    ];
+
+    public function idea()
+    {
+        return $this->belongsTo(Idea::class);
+    }
+
+    public function investor()
+    {
+        return $this->belongsTo(User::class, 'investor_id');
+    }
 
     public function founder()
     {
         return $this->belongsTo(User::class, 'founder_id');
-    }
-
-    public function deals()
-    {
-        return $this->hasMany(Deal::class);
-    }
-
-    public function savedBy()
-    {
-        return $this->hasMany(SavedIdea::class);
-    }
-
-    public function accessRequests()
-    {
-        return $this->hasMany(AccessRequest::class);
     }
 }
