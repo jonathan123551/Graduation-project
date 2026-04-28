@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useLanguage } from "@/i18n/LanguageContext";
-import api from "@/lib/api";import { Button } from "@/components/ui/button";
+import { authService } from "@/services/authService";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
@@ -12,41 +13,41 @@ export default function Login() {
   const { t, language } = useLanguage();
   const isAr = language === "ar";
   const navigate = useNavigate();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setLoading(true);
+    e.preventDefault();
+    setLoading(true);
 
-  try {
-    const res = await api.post("/login", {
-      email,
-      password,
-    });
+    try {
+      const data = await authService.login({
+  email,
+  password,
+});
 
-    localStorage.setItem("token", res.data.token);
-    localStorage.setItem("user", JSON.stringify(res.data.user));
+const role = data.user?.role;
 
-    toast({
-      title: "Success",
-      description: "Logged in successfully",
-    });
-
-    navigate("/dashboard");
-    window.location.reload();
-  } catch (error: any) {
-    toast({
-      title: t.common.error,
-      description:
-        error?.response?.data?.message || "Invalid credentials",
-      variant: "destructive",
-    });
-  }
-
-  setLoading(false);
-};
+if (role === "admin") {
+  navigate("/admin");
+} else if (role === "entrepreneur") {
+  navigate("/dashboard");
+} else {
+  navigate("/marketplace");
+}    } catch (err: any) {
+      toast({
+        title: "Error",
+        description:
+          err?.response?.data?.message ||
+          "Login failed",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4">
@@ -57,38 +58,95 @@ export default function Login() {
               <Sparkles className="w-5 h-5 text-primary-foreground" />
             </div>
           </div>
-          <h1 className="text-2xl font-bold text-foreground">{t.auth.login}</h1>
+
+          <h1 className="text-2xl font-bold text-foreground">
+            {t.auth.login}
+          </h1>
         </div>
 
         <div className="glass rounded-2xl p-8 shadow-glass">
-          <GoogleSignInButton label={isAr ? "تسجيل الدخول عبر Google" : "Sign in with Google"} />
+          <GoogleSignInButton
+            label={
+              isAr
+                ? "تسجيل الدخول عبر Google"
+                : "Sign in with Google"
+            }
+          />
+
           <div className="my-5 flex items-center gap-3">
             <div className="h-px bg-border flex-1" />
-            <span className="text-xs text-muted-foreground">{isAr ? "أو" : "OR"}</span>
+            <span className="text-xs text-muted-foreground">
+              {isAr ? "أو" : "OR"}
+            </span>
             <div className="h-px bg-border flex-1" />
           </div>
-          <form onSubmit={handleLogin} className="space-y-4">
+
+          <form
+            onSubmit={handleLogin}
+            className="space-y-4"
+          >
             <div className="space-y-2">
-              <Label htmlFor="email">{t.auth.email}</Label>
-              <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+              <Label htmlFor="email">
+                {t.auth.email}
+              </Label>
+
+              <Input
+                id="email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) =>
+                  setEmail(e.target.value)
+                }
+              />
             </div>
+
             <div className="space-y-2">
               <div className="flex justify-between items-center">
-                <Label htmlFor="password">{t.auth.password}</Label>
-                <Link to="/forgot-password" className="text-xs text-primary hover:underline">
+                <Label htmlFor="password">
+                  {t.auth.password}
+                </Label>
+
+                <Link
+                  to="/forgot-password"
+                  className="text-xs text-primary hover:underline"
+                >
                   {t.auth.forgotPassword}
                 </Link>
               </div>
-              <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+
+              <Input
+                id="password"
+                type="password"
+                required
+                value={password}
+                onChange={(e) =>
+                  setPassword(e.target.value)
+                }
+              />
             </div>
-            <Button type="submit" className="w-full gradient-primary border-0 text-primary-foreground" disabled={loading}>
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t.auth.signIn}
+
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full gradient-primary border-0 text-primary-foreground"
+            >
+              {loading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                t.auth.signIn
+              )}
             </Button>
           </form>
 
           <p className="text-center text-sm text-muted-foreground mt-6">
             {t.auth.noAccount}{" "}
-            <Link to="/register" className="text-primary hover:underline font-medium">{t.auth.signUp}</Link>
+            <Link
+              to="/register"
+              className="text-primary hover:underline font-medium"
+            >
+              {t.auth.signUp}
+            </Link>
           </p>
         </div>
       </div>

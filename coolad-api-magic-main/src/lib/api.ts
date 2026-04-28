@@ -1,33 +1,58 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:8000/api",
+  baseURL:
+    import.meta.env.VITE_API_URL ||
+    "http://localhost:8000/api",
+
   headers: {
     Accept: "application/json",
     "Content-Type": "application/json",
   },
+
+  withCredentials: true,
 });
 
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
+/**
+ * Request Interceptor
+ * Add token automatically
+ */
+api.interceptors.request.use(
+  (config) => {
+    const token =
+      localStorage.getItem("auth_token");
 
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-
-  return config;
-});
-
-api.interceptors.response.use(
-  (res) => res,
-  (err) => {
-    if (err.response?.status === 401) {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      window.location.href = "/login";
+    if (token) {
+      config.headers.Authorization =
+        `Bearer ${token}`;
     }
 
-    return Promise.reject(err);
+    return config;
+  },
+
+  (error) => Promise.reject(error)
+);
+
+/**
+ * Response Interceptor
+ * Auto logout if unauthorized
+ */
+api.interceptors.response.use(
+  (response) => response,
+
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("auth_user");
+
+      if (
+        window.location.pathname !== "/login"
+      ) {
+        window.location.href = "/login";
+      }
+    }
+
+    return Promise.reject(error);
   }
 );
 

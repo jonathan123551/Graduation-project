@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useLanguage } from "@/i18n/LanguageContext";
-import api from "@/lib/api";
+import { useIdeas } from "@/hooks/useIdeas";
 
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -85,8 +85,7 @@ function parseCapitalToUSD(value: string | null | undefined): number {
 export default function Marketplace() {
   const { t } = useLanguage();
 
-  const [ideas, setIdeas] = useState<IdeaRow[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { ideas, loading } = useIdeas();
 
   const [search, setSearch] = useState("");
   const [sectorFilters, setSectorFilters] = useState<string[]>([]);
@@ -96,49 +95,35 @@ export default function Marketplace() {
     0, 5000000,
   ]);
 
-  const [riskRange, setRiskRange] = useState<[number, number]>([0, 100]);
+  const [riskRange, setRiskRange] = useState<[number, number]>([
+    0, 100,
+  ]);
 
   const [scoreMin, setScoreMin] = useState(0);
   const [sortBy, setSortBy] = useState("newest");
 
-  useEffect(() => {
-    const fetchIdeas = async () => {
-      try {
-        const res = await api.get("/ideas", {
-          params: {
-            status: "published",
-            sort: "latest",
-          },
-        });
-
-        const rows = res.data.data ?? res.data ?? [];
-
-        setIdeas(rows);
-      } catch (error) {
-        console.error("Failed to fetch marketplace ideas:", error);
-        setIdeas([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchIdeas();
-  }, []);
-
   const sectors = useMemo(() => {
     return Array.from(
-      new Set(ideas.map((item) => item.sector).filter(Boolean))
+      new Set(
+        (ideas as IdeaRow[])
+          .map((item) => item.sector)
+          .filter(Boolean)
+      )
     );
   }, [ideas]);
 
   const locations = useMemo(() => {
     return Array.from(
-      new Set(ideas.map((item) => item.location).filter(Boolean))
+      new Set(
+        (ideas as IdeaRow[])
+          .map((item) => item.location)
+          .filter(Boolean)
+      )
     );
   }, [ideas]);
 
   const filteredIdeas = useMemo(() => {
-    let result = [...ideas];
+    let result = [...(ideas as IdeaRow[])];
 
     if (search.trim()) {
       const q = search.toLowerCase();
@@ -183,7 +168,9 @@ export default function Marketplace() {
       );
     });
 
-    result = result.filter((item) => item.ai_score >= scoreMin);
+    result = result.filter(
+      (item) => item.ai_score >= scoreMin
+    );
 
     if (sortBy === "highestScore") {
       result.sort((a, b) => b.ai_score - a.ai_score);
@@ -224,8 +211,14 @@ export default function Marketplace() {
   const activeFiltersCount =
     sectorFilters.length +
     (locationFilter !== "all" ? 1 : 0) +
-    (capitalRange[0] > 0 || capitalRange[1] < 5000000 ? 1 : 0) +
-    (riskRange[0] > 0 || riskRange[1] < 100 ? 1 : 0) +
+    (capitalRange[0] > 0 ||
+    capitalRange[1] < 5000000
+      ? 1
+      : 0) +
+    (riskRange[0] > 0 ||
+    riskRange[1] < 100
+      ? 1
+      : 0) +
     (scoreMin > 0 ? 1 : 0);
 
   const toggleSector = (sector: string) => {
@@ -259,8 +252,10 @@ export default function Marketplace() {
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-3">
           <Lightbulb className="h-7 w-7 text-primary" />
+
           <h1 className="text-3xl font-bold">
-            {t.marketplace?.title || "Marketplace"}
+            {t.marketplace?.title ||
+              "Marketplace"}
           </h1>
         </div>
 
@@ -277,7 +272,9 @@ export default function Marketplace() {
 
             <Input
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) =>
+                setSearch(e.target.value)
+              }
               placeholder="Search ideas..."
               className="ps-10"
             />
@@ -316,6 +313,7 @@ export default function Marketplace() {
                 <Button variant="outline">
                   <SlidersHorizontal className="h-4 w-4 me-2" />
                   Filters
+
                   {activeFiltersCount > 0 && (
                     <Badge className="ms-2">
                       {activeFiltersCount}
@@ -326,7 +324,9 @@ export default function Marketplace() {
 
               <PopoverContent className="w-80 space-y-5">
                 <div>
-                  <p className="font-medium mb-2">Sector</p>
+                  <p className="font-medium mb-2">
+                    Sector
+                  </p>
 
                   <div className="space-y-2">
                     {sectors.map((sector) => (
@@ -342,6 +342,7 @@ export default function Marketplace() {
                             toggleSector(sector)
                           }
                         />
+
                         <span>{sector}</span>
                       </label>
                     ))}
@@ -349,11 +350,15 @@ export default function Marketplace() {
                 </div>
 
                 <div>
-                  <p className="font-medium mb-2">Location</p>
+                  <p className="font-medium mb-2">
+                    Location
+                  </p>
 
                   <Select
                     value={locationFilter}
-                    onValueChange={setLocationFilter}
+                    onValueChange={
+                      setLocationFilter
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -427,22 +432,27 @@ export default function Marketplace() {
           layout
           className="grid md:grid-cols-2 xl:grid-cols-3 gap-6"
         >
-         {filteredIdeas.map((idea, index) => (
-  <IdeaCard
-    key={idea.id}
-    id={idea.id}
-    title={idea.title}
-    description={idea.description}
-    sector={idea.sector}
-    location={idea.location}
-    founderName={idea.profiles?.full_name || "Unknown"}
-    aiScore={idea.ai_score || 0}
-    riskScore={idea.risk_score || 0}
-    marketScore={idea.market_score || 0}
-    capitalRequired={idea.capital_required || "N/A"}
-    index={index}
-  />
-))}
+          {filteredIdeas.map((idea, index) => (
+            <IdeaCard
+              key={idea.id}
+              id={idea.id}
+              title={idea.title}
+              description={idea.description}
+              sector={idea.sector}
+              location={idea.location}
+              founderName={
+                idea.profiles?.full_name ||
+                "Unknown"
+              }
+              aiScore={idea.ai_score || 0}
+              riskScore={idea.risk_score || 0}
+              marketScore={idea.market_score || 0}
+              capitalRequired={
+                idea.capital_required || "N/A"
+              }
+              index={index}
+            />
+          ))}
         </motion.div>
       )}
     </div>

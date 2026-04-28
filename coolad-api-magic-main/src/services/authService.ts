@@ -1,42 +1,47 @@
 import api from "@/lib/api";
 
+interface LoginData {
+  email: string;
+  password: string;
+}
+
+interface RegisterData {
+  full_name: string;
+  email: string;
+  phone: string;
+  password: string;
+  password_confirmation: string;
+  role: "entrepreneur" | "investor" | "explorer";
+}
+
 export const authService = {
-  async login(email: string, password: string) {
-    const { data } = await api.post("/auth/login", {
-      email,
-      password,
-    });
+  async login(data: LoginData) {
+    const res = await api.post("/login", data);
 
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("user", JSON.stringify(data.user));
+    localStorage.setItem("auth_token", res.data.token);
+    localStorage.setItem("auth_user", JSON.stringify(res.data.user));
 
-    return data;
+    return res.data;
   },
 
-  async register(payload: any) {
-    const { data } = await api.post("/auth/register", payload);
+  async register(data: RegisterData) {
+    const res = await api.post("/register", data);
 
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("user", JSON.stringify(data.user));
+    localStorage.setItem("auth_token", res.data.token);
+    localStorage.setItem("auth_user", JSON.stringify(res.data.user));
 
-    return data;
+    return res.data;
   },
-  async resetPassword(payload: any) {
-  const { data } = await api.post("/auth/reset-password", payload);
-  return data;
-},
+
   async logout() {
-    await api.post("/auth/logout");
+    await api.post("/logout");
 
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("auth_user");
   },
-  async forgotPassword(email: string) {
-  const { data } = await api.post("/auth/forgot-password", { email });
-  return data;
-},
+
   async me() {
-    const { data } = await api.get("/auth/me");
-    return data;
+    const res = await api.get("/me");
+    return res.data;
   },
 };
