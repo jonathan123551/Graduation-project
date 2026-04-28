@@ -1,5 +1,10 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import {
+  Link,
+  useNavigate,
+  Navigate,
+} from "react-router-dom";
+
 import { useLanguage } from "@/i18n/LanguageContext";
 import { authService } from "@/services/authService";
 import { useAuth } from "@/contexts/AuthContext";
@@ -31,7 +36,12 @@ export default function Register() {
   const isAr = language === "ar";
 
   const navigate = useNavigate();
-  const { setUser } = useAuth();
+
+  const {
+    user,
+    loading: authLoading,
+    setUser,
+  } = useAuth();
 
   const [fullName, setFullName] =
     useState("");
@@ -51,102 +61,177 @@ export default function Register() {
   const [loading, setLoading] =
     useState(false);
 
+  if (!authLoading && user) {
+    if (user.role === "admin") {
+      return (
+        <Navigate
+          to="/admin"
+          replace
+        />
+      );
+    }
+
+    if (
+      user.role ===
+      "entrepreneur"
+    ) {
+      return (
+        <Navigate
+          to="/dashboard"
+          replace
+        />
+      );
+    }
+
+    return (
+      <Navigate
+        to="/marketplace"
+        replace
+      />
+    );
+  }
+
   const roles = [
     {
-      value: "entrepreneur",
+      value:
+        "entrepreneur",
       label:
-        t.auth.entrepreneur ||
+        t.auth
+          .entrepreneur ||
         "Entrepreneur",
       icon: Rocket,
     },
     {
-      value: "investor",
+      value:
+        "investor",
       label:
-        t.auth.investor ||
+        t.auth
+          .investor ||
         "Investor",
       icon: DollarSign,
     },
     {
-      value: "explorer",
+      value:
+        "explorer",
       label:
-        t.auth.explorer ||
+        t.auth
+          .explorer ||
         "Explorer",
       icon: Compass,
     },
   ];
 
-  const validatePhone = (p: string) =>
+  const validatePhone = (
+    p: string
+  ) =>
     /^[\d+\s()-]{8,20}$/.test(
       p.trim()
     );
 
-  const handleRegister = async (
-    e: React.FormEvent
-  ) => {
-    e.preventDefault();
+  const handleRegister =
+    async (
+      e: React.FormEvent
+    ) => {
+      e.preventDefault();
 
-    if (password.length < 6) {
-      toast({
-        title: "Error",
-        description:
-          "Password must be at least 6 characters",
-        variant: "destructive",
-      });
-      return;
-    }
+      if (
+        password.length < 6
+      ) {
+        toast({
+          title: "Error",
+          description:
+            "Password must be at least 6 characters",
+          variant:
+            "destructive",
+        });
+        return;
+      }
 
-    if (!validatePhone(phone)) {
-      toast({
-        title: "Error",
-        description:
-          "Invalid phone number",
-        variant: "destructive",
-      });
-      return;
-    }
+      if (
+        !validatePhone(
+          phone
+        )
+      ) {
+        toast({
+          title: "Error",
+          description:
+            "Invalid phone number",
+          variant:
+            "destructive",
+        });
+        return;
+      }
 
-    setLoading(true);
+      setLoading(true);
 
-    try {
-      const data = await authService.register({
-  full_name: fullName,
-  email,
-  phone,
-  password,
-  password_confirmation: password,
-  role,
-});
+      try {
+        const data =
+          await authService.register(
+            {
+              full_name:
+                fullName,
+              email,
+              phone,
+              password,
+              password_confirmation:
+                password,
+              role,
+            }
+          );
 
-if (data?.user) {
-  setUser(data.user);
-}
+        if (
+          data?.user
+        ) {
+          setUser(
+            data.user
+          );
+        }
 
-const roleName = data.user?.role;
+        const roleName =
+          data.user?.role;
 
-toast({
-  title: "Success",
-  description: "Account created successfully",
-});
+        toast({
+          title:
+            "Success",
+          description:
+            "Account created successfully",
+        });
 
-if (roleName === "admin") {
-  navigate("/admin");
-} else if (roleName === "entrepreneur") {
-  navigate("/dashboard");
-} else {
-  navigate("/marketplace");
-}    } catch (err: any) {
-      toast({
-        title: "Error",
-        description:
-          err?.response?.data
-            ?.message ||
-          "Registration failed",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+        if (
+          roleName ===
+          "admin"
+        ) {
+          navigate(
+            "/admin"
+          );
+        } else if (
+          roleName ===
+          "entrepreneur"
+        ) {
+          navigate(
+            "/dashboard"
+          );
+        } else {
+          navigate(
+            "/marketplace"
+          );
+        }
+      } catch (err: any) {
+        toast({
+          title: "Error",
+          description:
+            err
+              ?.response
+              ?.data
+              ?.message ||
+            "Registration failed",
+          variant:
+            "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-10">
@@ -159,7 +244,10 @@ if (roleName === "admin") {
           </div>
 
           <h1 className="text-2xl font-bold">
-            {t.auth.register}
+            {
+              t.auth
+                .register
+            }
           </h1>
         </div>
 
@@ -173,7 +261,9 @@ if (roleName === "admin") {
           />
 
           <form
-            onSubmit={handleRegister}
+            onSubmit={
+              handleRegister
+            }
             className="space-y-4 mt-6"
           >
             <div>
@@ -184,10 +274,16 @@ if (roleName === "admin") {
               </Label>
 
               <Input
-                value={fullName}
-                onChange={(e) =>
+                value={
+                  fullName
+                }
+                onChange={(
+                  e
+                ) =>
                   setFullName(
-                    e.target.value
+                    e
+                      .target
+                      .value
                   )
                 }
                 required
@@ -196,15 +292,24 @@ if (roleName === "admin") {
 
             <div>
               <Label>
-                {t.auth.email}
+                {
+                  t.auth
+                    .email
+                }
               </Label>
 
               <Input
                 type="email"
-                value={email}
-                onChange={(e) =>
+                value={
+                  email
+                }
+                onChange={(
+                  e
+                ) =>
                   setEmail(
-                    e.target.value
+                    e
+                      .target
+                      .value
                   )
                 }
                 required
@@ -220,10 +325,16 @@ if (roleName === "admin") {
               </Label>
 
               <Input
-                value={phone}
-                onChange={(e) =>
+                value={
+                  phone
+                }
+                onChange={(
+                  e
+                ) =>
                   setPhone(
-                    e.target.value
+                    e
+                      .target
+                      .value
                   )
                 }
                 required
@@ -232,15 +343,24 @@ if (roleName === "admin") {
 
             <div>
               <Label>
-                {t.auth.password}
+                {
+                  t.auth
+                    .password
+                }
               </Label>
 
               <Input
                 type="password"
-                value={password}
-                onChange={(e) =>
+                value={
+                  password
+                }
+                onChange={(
+                  e
+                ) =>
                   setPassword(
-                    e.target.value
+                    e
+                      .target
+                      .value
                   )
                 }
                 required
@@ -248,30 +368,39 @@ if (roleName === "admin") {
             </div>
 
             <div className="grid gap-2">
-              {roles.map((r) => (
-                <button
-                  key={r.value}
-                  type="button"
-                  onClick={() =>
-                    setRole(
-                      r.value as Role
-                    )
-                  }
-                  className={cn(
-                    "border rounded-xl p-3 text-left flex items-center gap-2 transition-colors",
-                    role === r.value &&
-                      "border-primary bg-primary/5"
-                  )}
-                >
-                  <r.icon className="w-4 h-4" />
-                  {r.label}
-                </button>
-              ))}
+              {roles.map(
+                (r) => (
+                  <button
+                    key={
+                      r.value
+                    }
+                    type="button"
+                    onClick={() =>
+                      setRole(
+                        r.value as Role
+                      )
+                    }
+                    className={cn(
+                      "border rounded-xl p-3 text-left flex items-center gap-2 transition-colors",
+                      role ===
+                        r.value &&
+                        "border-primary bg-primary/5"
+                    )}
+                  >
+                    <r.icon className="w-4 h-4" />
+                    {
+                      r.label
+                    }
+                  </button>
+                )
+              )}
             </div>
 
             <Button
               type="submit"
-              disabled={loading}
+              disabled={
+                loading
+              }
               className="w-full gradient-primary border-0 text-primary-foreground"
             >
               {loading ? (

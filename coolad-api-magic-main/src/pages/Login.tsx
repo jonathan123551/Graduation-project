@@ -1,48 +1,106 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import {
+  Link,
+  useNavigate,
+  Navigate,
+} from "react-router-dom";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { authService } from "@/services/authService";
+import { useAuth } from "@/contexts/AuthContext";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { Sparkles, Loader2 } from "lucide-react";
+
+import {
+  Sparkles,
+  Loader2,
+} from "lucide-react";
+
 import GoogleSignInButton from "@/components/GoogleSignInButton";
 
 export default function Login() {
   const { t, language } = useLanguage();
   const isAr = language === "ar";
+
   const navigate = useNavigate();
+  const { user, loading: authLoading } =
+    useAuth();
 
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [password, setPassword] =
+    useState("");
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const [loading, setLoading] =
+    useState(false);
+
+  if (!authLoading && user) {
+    if (user.role === "admin") {
+      return (
+        <Navigate
+          to="/admin"
+          replace
+        />
+      );
+    }
+
+    if (
+      user.role === "entrepreneur"
+    ) {
+      return (
+        <Navigate
+          to="/dashboard"
+          replace
+        />
+      );
+    }
+
+    return (
+      <Navigate
+        to="/marketplace"
+        replace
+      />
+    );
+  }
+
+  const handleLogin = async (
+    e: React.FormEvent
+  ) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const data = await authService.login({
-  email,
-  password,
-});
+      const data =
+        await authService.login({
+          email,
+          password,
+        });
 
-const role = data.user?.role;
+      const role =
+        data.user?.role;
 
-if (role === "admin") {
-  navigate("/admin");
-} else if (role === "entrepreneur") {
-  navigate("/dashboard");
-} else {
-  navigate("/marketplace");
-}    } catch (err: any) {
+      if (role === "admin") {
+        navigate("/admin");
+      } else if (
+        role ===
+        "entrepreneur"
+      ) {
+        navigate("/dashboard");
+      } else {
+        navigate(
+          "/marketplace"
+        );
+      }
+    } catch (err: any) {
       toast({
         title: "Error",
         description:
-          err?.response?.data?.message ||
+          err?.response?.data
+            ?.message ||
           "Login failed",
-        variant: "destructive",
+        variant:
+          "destructive",
       });
     } finally {
       setLoading(false);
@@ -75,14 +133,20 @@ if (role === "admin") {
 
           <div className="my-5 flex items-center gap-3">
             <div className="h-px bg-border flex-1" />
+
             <span className="text-xs text-muted-foreground">
-              {isAr ? "أو" : "OR"}
+              {isAr
+                ? "أو"
+                : "OR"}
             </span>
+
             <div className="h-px bg-border flex-1" />
           </div>
 
           <form
-            onSubmit={handleLogin}
+            onSubmit={
+              handleLogin
+            }
             className="space-y-4"
           >
             <div className="space-y-2">
@@ -95,8 +159,13 @@ if (role === "admin") {
                 type="email"
                 required
                 value={email}
-                onChange={(e) =>
-                  setEmail(e.target.value)
+                onChange={(
+                  e
+                ) =>
+                  setEmail(
+                    e.target
+                      .value
+                  )
                 }
               />
             </div>
@@ -104,14 +173,20 @@ if (role === "admin") {
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <Label htmlFor="password">
-                  {t.auth.password}
+                  {
+                    t.auth
+                      .password
+                  }
                 </Label>
 
                 <Link
                   to="/forgot-password"
                   className="text-xs text-primary hover:underline"
                 >
-                  {t.auth.forgotPassword}
+                  {
+                    t.auth
+                      .forgotPassword
+                  }
                 </Link>
               </div>
 
@@ -119,33 +194,49 @@ if (role === "admin") {
                 id="password"
                 type="password"
                 required
-                value={password}
-                onChange={(e) =>
-                  setPassword(e.target.value)
+                value={
+                  password
+                }
+                onChange={(
+                  e
+                ) =>
+                  setPassword(
+                    e.target
+                      .value
+                  )
                 }
               />
             </div>
 
             <Button
               type="submit"
-              disabled={loading}
+              disabled={
+                loading
+              }
               className="w-full gradient-primary border-0 text-primary-foreground"
             >
               {loading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                t.auth.signIn
+                t.auth
+                  .signIn
               )}
             </Button>
           </form>
 
           <p className="text-center text-sm text-muted-foreground mt-6">
-            {t.auth.noAccount}{" "}
+            {
+              t.auth
+                .noAccount
+            }{" "}
             <Link
               to="/register"
               className="text-primary hover:underline font-medium"
             >
-              {t.auth.signUp}
+              {
+                t.auth
+                  .signUp
+              }
             </Link>
           </p>
         </div>

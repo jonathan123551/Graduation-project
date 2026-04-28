@@ -3,26 +3,21 @@ import { useNavigate, Link } from "react-router-dom";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import api from "@/lib/api";
-import { streamEvaluation, type ProjectData } from "@/lib/streamChat";
+import {
+  streamEvaluation,
+  type ProjectData,
+} from "@/lib/streamChat";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "@/hooks/use-toast";
-import { motion } from "framer-motion";
 
 import {
-  Building2,
-  MapPin,
-  DollarSign,
   TrendingUp,
-  Users,
-  Briefcase,
-  Target,
-  Clock,
+  DollarSign,
   Shield,
   Sparkles,
   Loader2,
@@ -31,10 +26,8 @@ import {
   CheckCircle,
   AlertTriangle,
   XCircle,
-  RotateCcw,
-  Zap,
+  Target,
   FileUp,
-  X,
 } from "lucide-react";
 
 interface ParsedScores {
@@ -45,64 +38,76 @@ interface ParsedScores {
   risk: number;
   overall: number;
   decision: string;
-  recommendations: string;
 }
 
-function parseScoresFromEvaluation(text: string): ParsedScores {
-  const scores: ParsedScores = {
-    innovation: 0,
-    market: 0,
-    execution: 0,
-    investment: 0,
-    risk: 0,
-    overall: 0,
-    decision: "pending",
-    recommendations: "",
-  };
-
+function parseScoresFromEvaluation(
+  text: string
+): ParsedScores {
   const getNum = (regex: RegExp) => {
     const match = text.match(regex);
-    return match ? Math.min(parseInt(match[1]), 100) : 0;
+    return match
+      ? Math.min(parseInt(match[1]), 100)
+      : 0;
   };
 
-  scores.innovation = getNum(/INNOVATION_SCORE:\s*(\d+)/i);
-  scores.market = getNum(/MARKET_SCORE:\s*(\d+)/i);
-  scores.execution = getNum(/EXECUTION_SCORE:\s*(\d+)/i);
-  scores.investment = getNum(/INVESTMENT_SCORE:\s*(\d+)/i);
-  scores.risk = getNum(/RISK_SCORE:\s*(\d+)/i);
-  scores.overall = getNum(/OVERALL_SCORE:\s*(\d+)/i);
-
-  const decisionMatch = text.match(
-    /DECISION:\s*(ACCEPTED|NEEDS_IMPROVEMENT|REJECTED)/i
+  const innovation = getNum(
+    /INNOVATION_SCORE:\s*(\d+)/i
   );
 
-  if (decisionMatch) {
-    scores.decision = decisionMatch[1].toLowerCase();
-  }
+  const market = getNum(
+    /MARKET_SCORE:\s*(\d+)/i
+  );
 
-  if (!scores.overall && scores.innovation) {
-    scores.overall = Math.round(
-      scores.innovation * 0.2 +
-        scores.market * 0.25 +
-        scores.execution * 0.2 +
-        scores.investment * 0.2 +
-        (100 - scores.risk) * 0.15
+  const execution = getNum(
+    /EXECUTION_SCORE:\s*(\d+)/i
+  );
+
+  const investment = getNum(
+    /INVESTMENT_SCORE:\s*(\d+)/i
+  );
+
+  const risk = getNum(
+    /RISK_SCORE:\s*(\d+)/i
+  );
+
+  let overall = getNum(
+    /OVERALL_SCORE:\s*(\d+)/i
+  );
+
+  if (!overall) {
+    overall = Math.round(
+      innovation * 0.2 +
+        market * 0.25 +
+        execution * 0.2 +
+        investment * 0.2 +
+        (100 - risk) * 0.15
     );
   }
 
-  if (scores.decision === "pending") {
-    scores.decision =
-      scores.overall >= 75
-        ? "accepted"
-        : scores.overall >= 50
-        ? "needs_improvement"
-        : "rejected";
+  let decision = "rejected";
+
+  if (overall >= 75) {
+    decision = "accepted";
+  } else if (overall >= 50) {
+    decision = "needs_improvement";
   }
 
-  return scores;
+  return {
+    innovation,
+    market,
+    execution,
+    investment,
+    risk,
+    overall,
+    decision,
+  };
 }
 
-function DecisionBadge({ decision }: { decision: string }) {
+function DecisionBadge({
+  decision,
+}: {
+  decision: string;
+}) {
   if (decision === "accepted") {
     return (
       <Badge className="bg-primary/10 text-primary border-primary/20">
@@ -133,17 +138,20 @@ function ScoreCard({
   label,
   value,
   icon: Icon,
-}: {
-  label: string;
-  value: number;
-  icon: any;
-}) {
+}: any) {
   return (
     <div className="glass rounded-xl p-4 text-center">
       <Icon className="h-5 w-5 mx-auto mb-2 text-primary" />
-      <div className="text-2xl font-bold">{value}</div>
-      <Progress value={value} className="h-1.5 my-2" />
-      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className="text-2xl font-bold">
+        {value}
+      </div>
+      <Progress
+        value={value}
+        className="h-1.5 my-2"
+      />
+      <div className="text-xs text-muted-foreground">
+        {label}
+      </div>
     </div>
   );
 }
@@ -153,32 +161,46 @@ export default function SubmitIdea() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [showResult, setShowResult] = useState(false);
-  const [evaluationResult, setEvaluationResult] = useState("");
-  const [parsedScores, setParsedScores] = useState<ParsedScores | null>(null);
+  const [isLoading, setIsLoading] =
+    useState(false);
 
-  const [documentFile, setDocumentFile] = useState<File | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showResult, setShowResult] =
+    useState(false);
 
-  const [form, setForm] = useState<ProjectData>({
-    name: "",
-    description: "",
-    sector: "",
-    location: "",
-    capital: "",
-    expectedRevenue: "",
-    teamSize: "",
-    teamExperience: "",
-    competitors: "",
-    competitiveAdvantage: "",
-    targetAudience: "",
-    timeline: "",
-    additionalInfo: "",
-  });
+  const [parsedScores, setParsedScores] =
+    useState<ParsedScores | null>(null);
 
-  const set = (key: keyof ProjectData, value: string) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
+  const [documentFile, setDocumentFile] =
+    useState<File | null>(null);
+
+  const fileInputRef =
+    useRef<HTMLInputElement>(null);
+
+  const [form, setForm] =
+    useState<ProjectData>({
+      name: "",
+      description: "",
+      sector: "",
+      location: "",
+      capital: "",
+      expectedRevenue: "",
+      teamSize: "",
+      teamExperience: "",
+      competitors: "",
+      competitiveAdvantage: "",
+      targetAudience: "",
+      timeline: "",
+      additionalInfo: "",
+    });
+
+  const set = (
+    key: keyof ProjectData,
+    value: string
+  ) => {
+    setForm((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
   };
 
   if (!user) {
@@ -186,6 +208,7 @@ export default function SubmitIdea() {
       <div className="min-h-[60vh] flex items-center justify-center">
         <div className="glass rounded-2xl p-10 text-center">
           <LogIn className="h-10 w-10 mx-auto mb-4 text-primary" />
+
           <h2>{t.submit.loginRequired}</h2>
 
           <Link to="/login">
@@ -199,72 +222,111 @@ export default function SubmitIdea() {
     );
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (
+    e: React.FormEvent
+  ) => {
     e.preventDefault();
 
     setIsLoading(true);
     setShowResult(true);
-    setEvaluationResult("");
 
     try {
       let uploadedFileUrl = null;
 
       if (documentFile) {
         const data = new FormData();
-        data.append("file", documentFile);
 
-        const upload = await api.post("/upload", data, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
+        data.append(
+          "file",
+          documentFile
+        );
 
-        uploadedFileUrl = upload.data.url;
+        const upload =
+          await api.post(
+            "/upload",
+            data,
+            {
+              headers: {
+                "Content-Type":
+                  "multipart/form-data",
+              },
+            }
+          );
+
+        uploadedFileUrl =
+          upload.data.url;
       }
 
       let finalText = "";
 
       await streamEvaluation({
         projectData: form,
+
         onDelta: (chunk) => {
           finalText += chunk;
-          setEvaluationResult((prev) => prev + chunk);
         },
 
         onDone: async () => {
-          const scores = parseScoresFromEvaluation(finalText);
+          const scores =
+            parseScoresFromEvaluation(
+              finalText
+            );
+
           setParsedScores(scores);
 
           await api.post("/ideas", {
             title: form.name,
-            description: form.description,
+            description:
+              form.description,
             sector: form.sector,
-            location: form.location,
-            capital_required: form.capital,
-            expected_revenue: form.expectedRevenue,
-            team_size: form.teamSize,
-            team_experience: form.teamExperience,
-            competitors: form.competitors,
-            competitive_advantage: form.competitiveAdvantage,
-            target_audience: form.targetAudience,
-            timeline: form.timeline,
-            additional_info: form.additionalInfo,
-            document_url: uploadedFileUrl,
+            location:
+              form.location,
+            capital_required:
+              form.capital,
+            expected_revenue:
+              form.expectedRevenue,
+            team_size:
+              form.teamSize,
+            team_experience:
+              form.teamExperience,
+            competitors:
+              form.competitors,
+            competitive_advantage:
+              form.competitiveAdvantage,
+            target_audience:
+              form.targetAudience,
+            timeline:
+              form.timeline,
+            additional_info:
+              form.additionalInfo,
+            document_url:
+              uploadedFileUrl,
 
-            ai_score: scores.overall,
-            market_score: scores.market,
-            risk_score: scores.risk,
-            innovation_score: scores.innovation,
-            execution_score: scores.execution,
-            investment_score: scores.investment,
-            decision: scores.decision,
-            ai_evaluation: finalText,
+            ai_score:
+              scores.overall,
+            market_score:
+              scores.market,
+            risk_score:
+              scores.risk,
+            innovation_score:
+              scores.innovation,
+            execution_score:
+              scores.execution,
+            investment_score:
+              scores.investment,
+            decision:
+              scores.decision,
+            ai_evaluation:
+              finalText,
           });
-
-          setIsLoading(false);
 
           toast({
             title: "Success",
-            description: "Idea submitted successfully",
+            description:
+              "Idea submitted successfully",
           });
+
+          setIsLoading(false);
         },
 
         onError: () => {
@@ -272,8 +334,10 @@ export default function SubmitIdea() {
 
           toast({
             title: "Error",
-            description: "AI Evaluation failed",
-            variant: "destructive",
+            description:
+              "AI Evaluation failed",
+            variant:
+              "destructive",
           });
         },
       });
@@ -282,8 +346,10 @@ export default function SubmitIdea() {
 
       toast({
         title: "Error",
-        description: "Submit failed",
-        variant: "destructive",
+        description:
+          "Submit failed",
+        variant:
+          "destructive",
       });
     }
   };
@@ -296,31 +362,56 @@ export default function SubmitIdea() {
 
   return (
     <div className="container mx-auto px-4 py-10 max-w-4xl">
-      <h1 className="text-3xl font-bold mb-8">{t.submit.title}</h1>
+      <h1 className="text-3xl font-bold mb-8">
+        {t.submit.title}
+      </h1>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-4"
+      >
         <Input
           placeholder="Project Name"
           value={form.name}
-          onChange={(e) => set("name", e.target.value)}
+          onChange={(e) =>
+            set(
+              "name",
+              e.target.value
+            )
+          }
         />
 
         <Textarea
           placeholder="Description"
           value={form.description}
-          onChange={(e) => set("description", e.target.value)}
+          onChange={(e) =>
+            set(
+              "description",
+              e.target.value
+            )
+          }
         />
 
         <Input
           placeholder="Sector"
           value={form.sector}
-          onChange={(e) => set("sector", e.target.value)}
+          onChange={(e) =>
+            set(
+              "sector",
+              e.target.value
+            )
+          }
         />
 
         <Input
           placeholder="Capital Required"
           value={form.capital}
-          onChange={(e) => set("capital", e.target.value)}
+          onChange={(e) =>
+            set(
+              "capital",
+              e.target.value
+            )
+          }
         />
 
         <input
@@ -328,14 +419,19 @@ export default function SubmitIdea() {
           type="file"
           hidden
           onChange={(e) =>
-            setDocumentFile(e.target.files?.[0] || null)
+            setDocumentFile(
+              e.target.files?.[0] ||
+                null
+            )
           }
         />
 
         <Button
           type="button"
           variant="outline"
-          onClick={() => fileInputRef.current?.click()}
+          onClick={() =>
+            fileInputRef.current?.click()
+          }
         >
           <FileUp className="h-4 w-4 me-2" />
           Upload File
@@ -343,7 +439,9 @@ export default function SubmitIdea() {
 
         <Button
           type="submit"
-          disabled={!isValid || isLoading}
+          disabled={
+            !isValid || isLoading
+          }
           className="w-full"
         >
           {isLoading ? (
@@ -357,46 +455,69 @@ export default function SubmitIdea() {
         </Button>
       </form>
 
-      {showResult && parsedScores && (
-        <div className="mt-10">
-          <DecisionBadge decision={parsedScores.decision} />
+      {showResult &&
+        parsedScores && (
+          <div className="mt-10">
+            <DecisionBadge
+              decision={
+                parsedScores.decision
+              }
+            />
 
-          <div className="grid md:grid-cols-5 gap-3 mt-6">
-            <ScoreCard
-              label="Innovation"
-              value={parsedScores.innovation}
-              icon={Sparkles}
-            />
-            <ScoreCard
-              label="Market"
-              value={parsedScores.market}
-              icon={TrendingUp}
-            />
-            <ScoreCard
-              label="Execution"
-              value={parsedScores.execution}
-              icon={Target}
-            />
-            <ScoreCard
-              label="Investment"
-              value={parsedScores.investment}
-              icon={DollarSign}
-            />
-            <ScoreCard
-              label="Risk"
-              value={parsedScores.risk}
-              icon={Shield}
-            />
+            <div className="grid md:grid-cols-5 gap-3 mt-6">
+              <ScoreCard
+                label="Innovation"
+                value={
+                  parsedScores.innovation
+                }
+                icon={Sparkles}
+              />
+
+              <ScoreCard
+                label="Market"
+                value={
+                  parsedScores.market
+                }
+                icon={TrendingUp}
+              />
+
+              <ScoreCard
+                label="Execution"
+                value={
+                  parsedScores.execution
+                }
+                icon={Target}
+              />
+
+              <ScoreCard
+                label="Investment"
+                value={
+                  parsedScores.investment
+                }
+                icon={DollarSign}
+              />
+
+              <ScoreCard
+                label="Risk"
+                value={
+                  parsedScores.risk
+                }
+                icon={Shield}
+              />
+            </div>
+
+            <Button
+              className="mt-6"
+              onClick={() =>
+                navigate(
+                  "/dashboard"
+                )
+              }
+            >
+              Go Dashboard
+            </Button>
           </div>
-
-          <Button
-            className="mt-6"
-            onClick={() => navigate("/dashboard")}
-          >
-            Go Dashboard
-          </Button>
-        </div>
-      )}
+        )}
     </div>
   );
 }
