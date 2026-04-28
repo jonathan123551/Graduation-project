@@ -1,10 +1,5 @@
-/**
- * useUserGate
- * Centralized check for what the user is allowed to do.
- * Order: phone -> KYC approved -> NDA per chat thread.
- */
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import api from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 
 export interface UserGateState {
@@ -12,33 +7,58 @@ export interface UserGateState {
   hasPhone: boolean;
   kycStatus: "not_started" | "pending" | "approved" | "rejected";
   isAdmin: boolean;
-  /** True when phone present AND KYC approved. Required to chat / sign deals. */
   canTransact: boolean;
   refresh: () => Promise<void>;
 }
 
 export function useUserGate(): UserGateState {
   const { user, userRole } = useAuth();
+
   const [loading, setLoading] = useState(true);
   const [hasPhone, setHasPhone] = useState(false);
-  const [kycStatus, setKycStatus] = useState<UserGateState["kycStatus"]>("not_started");
+
+  const [kycStatus, setKycStatus] =
+    useState<UserGateState["kycStatus"]>("not_started");
 
   const load = async () => {
-    if (!user) { setLoading(false); return; }
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
-    const [{ data: profile }, { data: kyc }] = await Promise.all([
-      supabase.from("profiles").select("phone_number").eq("id", user.id).maybeSingle(),
-      supabase.from("kyc_verifications").select("status").eq("user_id", user.id).maybeSingle(),
-    ]);
-    setHasPhone(!!profile?.phone_number?.trim());
-    setKycStatus((kyc?.status as UserGateState["kycStatus"]) || "not_started");
-    setLoading(false);
+
+    try {
+      const { data } = await api.get("/user/gate");
+
+      setHasPhone(!!data?.hasPhone);
+
+      setKycStatus(
+        (data?.kycStatus as UserGateState["kycStatus"]) ||
+          "not_started"
+      );
+    } catch {
+      setHasPhone(false);
+      setKycStatus("not_started");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [user?.id]);
+  useEffect(() => {
+    load();
+  }, [user?.id]);
 
   const isAdmin = userRole === "admin";
-  const canTransact = hasPhone && kycStatus === "approved";
+  const canTransact =
+    hasPhone && kycStatus === "approved";
 
-  return { loading, hasPhone, kycStatus, isAdmin, canTransact, refresh: load };
+  return {
+    loading,
+    hasPhone,
+    kycStatus,
+    isAdmin,
+    canTransact,
+    refresh: load,
+  };
 }

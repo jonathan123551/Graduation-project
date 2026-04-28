@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/i18n/LanguageContext";
-import { supabase } from "@/integrations/supabase/client";
+import api from "@/lib/api";
 import { Navigate, Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -48,57 +48,69 @@ export default function Dashboard() {
   const [dataLoading, setDataLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) return;
-    const load = async () => {
-      const promises: Promise<void>[] = [];
+  if (!user) return;
 
-      // Always load ideas the user founded
-      promises.push(
-        supabase.from("ideas").select("id, title, sector, ai_score, risk_score, created_at, status, decision, evaluation_version")
-          .eq("founder_id", user.id).order("created_at", { ascending: false })
-          .then(({ data }) => { setMyIdeas((data as unknown as IdeaRow[]) || []); }) as unknown as Promise<void>
-      );
+  const load = async () => {
+    try {
+      setDataLoading(true);
 
-      // Always load saved ideas
-      promises.push(
-        supabase.from("saved_ideas").select("id, idea_id, ideas(id, title, sector, ai_score)")
-          .eq("user_id", user.id).order("created_at", { ascending: false })
-          .then(({ data }) => { setSavedIdeas((data as unknown as SavedRow[]) || []); }) as unknown as Promise<void>
-      );
+      const [ideasRes, savedRes, accessRes, msgRes] = await Promise.all([
+        api.get("/ideas", { params: { founder_id: user.id } }),
+        api.get("/saved-ideas"),
+        api.get("/access-requests"),
+        api.get("/messages"),
+      ]);
 
-      // Load access requests where user is founder OR investor
-      promises.push(
-        supabase.from("access_requests").select("id, idea_id, investor_id, founder_id, status, created_at, profiles!access_requests_investor_id_fkey(full_name), ideas!access_requests_idea_id_fkey(title)")
-          .or(`founder_id.eq.${user.id},investor_id.eq.${user.id}`)
-          .order("created_at", { ascending: false })
-          .then(({ data }) => {
-            const mapped = (data || []).map((r: any) => ({
-              ...r,
-              investor_profile: r.profiles || null,
-              idea_title: r.ideas?.title || "",
-            }));
-            setAccessRequests(mapped as AccessRequestRow[]);
-          }) as unknown as Promise<void>
-      );
+      setMyIdeas(ideasRes.data.data ?? ideasRes.data ?? []);
+      setSavedIdeas(savedRes.data.data ?? savedRes.data ?? []);
+      setAccessRequests(accessRes.data.data ?? accessRes.data ?? []);
+      setRecentMessages(msgRes.data.data ?? msgRes.data ?? []);
 
-      promises.push(
-        supabase.from("messages").select("id, content, created_at, read, sender_id, receiver_id")
-          .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
-          .order("created_at", { ascending: false }).limit(10)
-          .then(({ data }) => { setRecentMessages((data as unknown as MessageRow[]) || []); }) as unknown as Promise<void>
-      );
-
-      await Promise.all(promises);
+    } catch (error) {
+      console.error("Dashboard load failed:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load dashboard",
+        variant: "destructive",
+      });
+    } finally {
       setDataLoading(false);
-    };
-    load();
+    }
+  };
+
+  load();
   }, [user, userRole]);
 
-  const handleAccessAction = async (requestId: string, action: "approved" | "rejected") => {
-    await supabase.from("access_requests").update({ status: action } as any).eq("id", requestId);
-    setAccessRequests(prev => prev.map(r => r.id === requestId ? { ...r, status: action } : r));
-    toast({ title: t.common.success, description: action === "approved" ? t.dashboard.approve : t.dashboard.reject });
-  };
+  const handleAccessAction = async (
+  requestId: string,
+  action: "approved" | "rejected"
+) => {
+  try {
+    await api.put(`/access-requests/${requestId}`, {
+      status: action,
+    });
+
+    setAccessRequests((prev) =>
+      prev.map((r) =>
+        r.id === requestId ? { ...r, status: action } : r
+      )
+    );
+
+    toast({
+      title: "Success",
+      description:
+        action === "approved"
+          ? t.dashboard.approve
+          : t.dashboard.reject,
+    });
+  } catch {
+    toast({
+      title: "Error",
+      description: "Action failed",
+      variant: "destructive",
+    });
+  }
+};
 
   if (loading) return <div className="min-h-[60vh] flex items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
   if (!user) return <Navigate to="/login" replace />;

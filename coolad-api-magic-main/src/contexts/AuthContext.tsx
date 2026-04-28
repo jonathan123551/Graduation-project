@@ -1,56 +1,63 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from "react";
 
-type User = any;
-type Session = any;
+import { authService } from "@/services/authService";
 
 interface AuthContextType {
-  user: User | null;
-  session: Session | null;
+  user: any;
   loading: boolean;
   userRole: string | null;
-  signOut: () => Promise<void>;
+  setUser: (user: any) => void;
+  logout: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    const storedUser = localStorage.getItem("user");
+    const stored = localStorage.getItem("user");
 
-    if (token && storedUser) {
-      setUser(JSON.parse(storedUser));
-      setSession({ token });
-      setUserRole(JSON.parse(storedUser)?.role || null);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      setUser(parsed);
+      setUserRole(parsed?.role || null);
     }
 
-    setLoading(false);
+    authService
+      .me()
+      .then((data) => {
+        setUser(data);
+        setUserRole(data?.role || null);
+        localStorage.setItem("user", JSON.stringify(data));
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
-  const signOut = async () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-
+  const logout = async () => {
+    await authService.logout();
     setUser(null);
-    setSession(null);
     setUserRole(null);
-
-    window.location.href = "/";
+    localStorage.removeItem("user");
   };
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        session,
         loading,
         userRole,
-        signOut,
+        setUser,
+        logout,
       }}
     >
       {children}
@@ -60,6 +67,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
+
+  if (!ctx) {
+    throw new Error("useAuth must be used inside AuthProvider");
+  }
+
   return ctx;
 }

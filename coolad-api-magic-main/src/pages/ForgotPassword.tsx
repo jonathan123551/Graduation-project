@@ -1,62 +1,70 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { useLanguage } from "@/i18n/LanguageContext";
-import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
+import { authService } from "@/services/authService";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, ArrowLeft } from "lucide-react";
 
 export default function ForgotPassword() {
-  const { t } = useLanguage();
+  const navigate = useNavigate();
+
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-  const [sent, setSent] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     setLoading(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
-    setLoading(false);
-    if (error) {
-      toast({ title: t.common.error, description: error.message, variant: "destructive" });
-    } else {
-      setSent(true);
+
+    try {
+      await authService.forgotPassword(email);
+
+      toast({
+        title: "Success",
+        description: "Reset link sent to your email",
+      });
+
+      navigate("/login");
+    } catch (err: any) {
+      toast({
+        title: "Error",
+        description:
+          err?.response?.data?.message || "Failed to send reset link",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-foreground">{t.auth.resetPassword}</h1>
-        </div>
-        <div className="glass rounded-2xl p-8 shadow-glass">
-          {sent ? (
-            <div className="text-center">
-              <p className="text-muted-foreground mb-4">{t.auth.resetSent}</p>
-              <Link to="/login">
-                <Button variant="outline">
-                  <ArrowLeft className="h-4 w-4 me-2" />
-                  {t.auth.signIn}
-                </Button>
-              </Link>
-            </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">{t.auth.email}</Label>
-                <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-              </div>
-              <Button type="submit" className="w-full gradient-primary border-0 text-primary-foreground" disabled={loading}>
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t.auth.resetLink}
-              </Button>
-            </form>
-          )}
-        </div>
+    <div className="min-h-screen flex items-center justify-center px-4">
+      <div className="glass rounded-2xl p-8 w-full max-w-md shadow-glass">
+        <h1 className="text-2xl font-bold text-center mb-6">
+          Forgot Password
+        </h1>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label>Email</Label>
+            <Input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={loading}
+          >
+            {loading ? "Loading..." : "Send Reset Link"}
+          </Button>
+        </form>
       </div>
     </div>
   );
