@@ -1,1 +1,0 @@
-ALTER TABLE public.ideas ADD CONSTRAINT ideas_founder_profile_fkey FOREIGN KEY (founder_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
