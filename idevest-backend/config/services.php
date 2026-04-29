@@ -84,4 +84,24 @@ return [
         'min_confidence' => (float) env('MINDEE_MIN_CONFIDENCE', 0.8),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Paymob (Egyptian online payments / escrow)
+    |--------------------------------------------------------------------------
+    |
+    | auto_capture=false on the payment_key call creates an authorize-only
+    | transaction (funds held but not yet captured). After KYC clears we
+    | call /acceptance/capture; on KYC failure we call /acceptance/void_refund/void.
+    |
+    | integration_id + iframe_id come from the Paymob dashboard. Defaults
+    | below are the values the graduation-project dev account provided
+    | and should be rotated before production via PAYMOB_* env vars.
+    */
+    'paymob' => [
+        'api_key'        => env('PAYMOB_API_KEY', 'ZXlKaGJHY2lPaUpJVXpVeE1pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SmpiR0Z6Y3lJNklrMWxjbU5vWVc1MElpd2ljSEp2Wm1sc1pWOXdheUk2TVRFMU5EWTROeXdpYm1GdFpTSTZJbWx1YVhScFlXd2lmUS41ZUZfMnNIRzhNMHJQZjRHS2RGc1Fsa1pfWWtqcUVEMExkMXl6TkdXSUsxcmREMm9DeUJlU29vc3BTaF9WenM4VHh0UzAwRjlSdkJnMVBuRk1ibG16Zw=='),
+        'integration_id' => (int) env('PAYMOB_INTEGRATION_ID', 5623390),
+        'iframe_id'      => (int) env('PAYMOB_IFRAME_ID', 0),
+        'hmac_secret'    => env('PAYMOB_HMAC_SECRET'),
+    ],
+
 ];

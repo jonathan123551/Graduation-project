@@ -32,6 +32,7 @@ import AiChat from "@/pages/AiChat";
 import ChatWithFounder from "@/pages/ChatWithFounder";
 import KycVerification from "@/pages/KycVerification";
 import MyDeals from "@/pages/MyDeals";
+import Payment from "@/pages/Payment";
 import Admin from "@/pages/Admin";
 import VerifyPhone from "@/pages/VerifyPhone";
 import NotFound from "@/pages/NotFound";
@@ -184,6 +185,17 @@ function AnimatedRoutes() {
             <ProtectedRoute>
               <PageTransition>
                 <MyDeals />
+              </PageTransition>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/pay"
+          element={
+            <ProtectedRoute>
+              <PageTransition>
+                <Payment />
               </PageTransition>
             </ProtectedRoute>
           }
