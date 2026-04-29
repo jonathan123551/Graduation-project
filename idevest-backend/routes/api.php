@@ -63,6 +63,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('deals/{deal}/sign-nda',   [DealController::class, 'signNda']);
 
     // Messages (polling-based chat)
+    Route::get('messages',                 [MessageController::class, 'conversations']); // inbox alias
     Route::get('messages/{userId}',        [MessageController::class, 'thread']);
     Route::post('messages',                [MessageController::class, 'store']);
     Route::patch('messages/{userId}/read', [MessageController::class, 'markRead']);

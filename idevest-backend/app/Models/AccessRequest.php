@@ -6,9 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class AccessRequest extends Model
 {
-    protected $keyType = 'string';
-    public $incrementing = false;
-
     protected $fillable = [
         'investor_id',
         'founder_id',
