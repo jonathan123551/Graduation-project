@@ -35,4 +35,20 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | AI provider (OpenAI-compatible chat completions)
+    |--------------------------------------------------------------------------
+    |
+    | Defaults target Groq (https://console.groq.com/) which is fully
+    | OpenAI-API-compatible. Override `AI_BASE_URL` / `AI_MODEL` / `AI_API_KEY`
+    | to swap providers. For backward compatibility we also accept
+    | `GROQ_API_KEY` as the key env var.
+    */
+    'ai' => [
+        'key'      => env('AI_API_KEY', env('GROQ_API_KEY')),
+        'base_url' => env('AI_BASE_URL', 'https://api.groq.com/openai/v1'),
+        'model'    => env('AI_MODEL', 'llama-3.1-8b-instant'),
+    ],
+
 ];

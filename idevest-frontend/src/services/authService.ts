@@ -34,10 +34,14 @@ export const authService = {
   },
 
   async logout() {
-    await api.post("/auth/logout");
-
-    localStorage.removeItem("auth_token");
-    localStorage.removeItem("auth_user");
+    // Revoke server-side token (best-effort; don't let network failure
+    // block the local cleanup the caller expects to happen).
+    try {
+      await api.post("/auth/logout");
+    } finally {
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("auth_user");
+    }
   },
 
   async me() {

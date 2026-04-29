@@ -9,9 +9,6 @@ class Idea extends Model
 {
     use HasFactory;
 
-    protected $keyType = 'string';
-    public $incrementing = false;
-
     protected $fillable = [
         'founder_id',
         'title',
@@ -20,14 +17,26 @@ class Idea extends Model
         'location',
         'capital_required',
         'capital_required_usd',
+        'expected_revenue',
+        'team_size',
+        'team_experience',
+        'competitors',
+        'competitive_advantage',
+        'target_audience',
+        'timeline',
+        'additional_info',
+        'document_url',
         'ai_score',
         'risk_score',
         'market_score',
+        'innovation_score',
+        'execution_score',
+        'investment_score',
         'status',
         'decision',
         'pitch_deck_url',
         'evaluation_version',
-        'ai_evaluation'
+        'ai_evaluation',
     ];
 
     public function founder()

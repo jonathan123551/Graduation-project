@@ -28,25 +28,58 @@ class AdminController extends Controller
         );
     }
 
-    public function blockUser(User $user)
+    public function blockUser(Request $request, User $user)
     {
         $user->update([
-            'is_blocked' => true
+            'is_blocked' => true,
         ]);
 
         return response()->json([
-            'message' => 'User blocked'
+            'message' => 'User blocked',
+            'reason' => $request->input('reason'),
         ]);
     }
 
     public function unblockUser(User $user)
     {
         $user->update([
-            'is_blocked' => false
+            'is_blocked' => false,
         ]);
 
         return response()->json([
-            'message' => 'User unblocked'
+            'message' => 'User unblocked',
+        ]);
+    }
+
+    public function grantRole(Request $request)
+    {
+        $data = $request->validate([
+            'email' => 'nullable|email',
+            'name'  => 'nullable|string',
+            'role'  => 'required|in:entrepreneur,investor,explorer,admin',
+        ]);
+
+        $query = User::query();
+        if (!empty($data['email'])) {
+            $query->where('email', $data['email']);
+        } elseif (!empty($data['name'])) {
+            $query->where('full_name', $data['name']);
+        } else {
+            return response()->json([
+                'message' => 'Provide `email` or `name` to identify the user.',
+            ], 422);
+        }
+
+        $user = $query->first();
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+
+        $user->update(['role' => $data['role']]);
+
+        return response()->json([
+            'message' => 'Role granted',
+            'user' => $user,
         ]);
     }
 
@@ -60,22 +93,36 @@ class AdminController extends Controller
     public function approveIdea(Idea $idea)
     {
         $idea->update([
-            'status' => 'published'
+            'status' => 'published',
         ]);
 
         return response()->json([
-            'message' => 'Idea approved'
+            'message' => 'Idea approved',
         ]);
     }
 
     public function rejectIdea(Idea $idea)
     {
         $idea->update([
-            'status' => 'rejected'
+            'status' => 'rejected',
         ]);
 
         return response()->json([
-            'message' => 'Idea rejected'
+            'message' => 'Idea rejected',
+        ]);
+    }
+
+    public function toggleIdea(Request $request, Idea $idea)
+    {
+        $data = $request->validate([
+            'status' => 'required|string|max:50',
+        ]);
+
+        $idea->update(['status' => $data['status']]);
+
+        return response()->json([
+            'message' => 'Idea status updated',
+            'idea' => $idea,
         ]);
     }
 
