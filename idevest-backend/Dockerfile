@@ -21,6 +21,7 @@ RUN composer install --no-dev --optimize-autoloader \
 EXPOSE 8000
 
 CMD sh -c "php artisan migrate --force \
-    && php artisan db:seed --class=AdminSeeder --force \
+    && (php artisan db:seed --class=AdminSeeder --force || echo '[deploy] AdminSeeder soft-failed, continuing') \
+    && php artisan admin:promote \
     && (php artisan storage:link || true) \
     && php artisan serve --host=0.0.0.0 --port=${PORT:-8000}"
