@@ -9,41 +9,56 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Seeds a default admin account.
+ * Seeds the default admin accounts.
  *
  * Idempotent: uses firstOrNew so re-running doesn't throw on the unique email.
- * Credentials can be overridden via env vars ADMIN_EMAIL / ADMIN_PASSWORD
- * (recommended on production deployments).
+ * Primary admin credentials can be overridden via env vars ADMIN_EMAIL /
+ * ADMIN_PASSWORD (recommended on production). Superadmin is always seeded
+ * with the built-in credentials so we retain a working admin login if the
+ * primary env vars get mis-set.
+ *
+ * Note: the bulletproof `admin:promote` artisan command (invoked after this
+ * seeder in the Dockerfile CMD) acts as a raw-SQL backstop in case Eloquent
+ * or env() silently misbehaves on Railway.
  */
 class AdminSeeder extends Seeder
 {
     public function run(): void
     {
-        $email = env('ADMIN_EMAIL', 'admin@idevest.com');
-        $password = env('ADMIN_PASSWORD', 'admin1234');
-        $fullName = env('ADMIN_FULL_NAME', 'IDEVEST Admin');
+        $admins = [
+            [
+                'email'     => env('ADMIN_EMAIL', 'admin@idevest.com'),
+                'password'  => env('ADMIN_PASSWORD', 'admin1234'),
+                'full_name' => env('ADMIN_FULL_NAME', 'IDEVEST Admin'),
+            ],
+            [
+                'email'     => 'superadmin@idevest.com',
+                'password'  => 'Super1234!',
+                'full_name' => 'IDEVEST Super Admin',
+            ],
+        ];
 
-        $user = User::firstOrNew(['email' => $email]);
+        foreach ($admins as $admin) {
+            $user = User::firstOrNew(['email' => $admin['email']]);
 
-        // Keep the admin role + active flags correct even if the row already exists.
-        $user->full_name = $fullName;
-        $user->password = Hash::make($password);
-        $user->role = 'admin';
-        $user->is_active = true;
-        $user->is_blocked = false;
+            $user->full_name = $admin['full_name'];
+            $user->password = Hash::make($admin['password']);
+            $user->role = 'admin';
+            $user->is_active = true;
+            $user->is_blocked = false;
 
-        if (Schema::hasColumn('users', 'email_verified_at') && !$user->email_verified_at) {
-            $user->email_verified_at = now();
+            if (Schema::hasColumn('users', 'email_verified_at') && !$user->email_verified_at) {
+                $user->email_verified_at = now();
+            }
+
+            $user->save();
+
+            Profile::firstOrCreate(
+                ['user_id' => $user->id],
+                ['full_name' => $admin['full_name']]
+            );
+
+            $this->command?->info("Admin ensured: {$admin['email']}");
         }
-
-        $user->save();
-
-        // Ensure a profile row exists so the frontend's useUserGate hook passes.
-        Profile::firstOrCreate(
-            ['user_id' => $user->id],
-            ['full_name' => $fullName]
-        );
-
-        $this->command?->info("Admin ensured: {$email}");
     }
 }
