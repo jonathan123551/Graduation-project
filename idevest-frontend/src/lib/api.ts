@@ -2,7 +2,8 @@ import axios from "axios";
 
 const api = axios.create({
   baseURL:
-    import.meta.env.VITE_API_URL ,
+    import.meta.env.VITE_API_URL ||
+    "https://backend-idevest.up.railway.app/api",
 
   headers: {
     Accept: "application/json",
@@ -12,43 +13,23 @@ const api = axios.create({
   withCredentials: true,
 });
 
-/**
- * Request Interceptor
- * Add token automatically
- */
-api.interceptors.request.use(
-  (config) => {
-    const token =
-      localStorage.getItem("auth_token");
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("auth_token");
 
-    if (token) {
-      config.headers.Authorization =
-        `Bearer ${token}`;
-    }
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
 
-    return config;
-  },
+  return config;
+});
 
-  (error) => Promise.reject(error)
-);
-
-/**
- * Response Interceptor
- * Auto logout if unauthorized
- */
 api.interceptors.response.use(
   (response) => response,
-
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem("auth_token");
       localStorage.removeItem("auth_user");
-
-      if (
-        window.location.pathname !== "/login"
-      ) {
-        window.location.href = "/login";
-      }
+      window.location.href = "/login";
     }
 
     return Promise.reject(error);
