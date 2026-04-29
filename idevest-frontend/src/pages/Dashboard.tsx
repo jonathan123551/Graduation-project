@@ -51,31 +51,31 @@ export default function Dashboard() {
   if (!user) return;
 
   const load = async () => {
-    try {
-      setDataLoading(true);
+    setDataLoading(true);
 
-      const [ideasRes, savedRes, accessRes, msgRes] = await Promise.all([
-        api.get("/ideas", { params: { founder_id: user.id } }),
-        api.get("/saved-ideas"),
-        api.get("/access-requests"),
-        api.get("/messages"),
-      ]);
+    const [ideasRes, savedRes, accessRes, msgRes] = await Promise.allSettled([
+      api.get("/ideas", { params: { founder_id: user.id } }),
+      api.get("/saved-ideas"),
+      api.get("/access-requests"),
+      api.get("/messages"),
+    ]);
 
-      setMyIdeas(ideasRes.data.data ?? ideasRes.data ?? []);
-      setSavedIdeas(savedRes.data.data ?? savedRes.data ?? []);
-      setAccessRequests(accessRes.data.data ?? accessRes.data ?? []);
-      setRecentMessages(msgRes.data.data ?? msgRes.data ?? []);
+    const unwrap = <T,>(r: PromiseSettledResult<{ data: { data?: T[] } | T[] }>, label: string): T[] => {
+      if (r.status === "fulfilled") {
+        const body = r.value.data as { data?: T[] } | T[];
+        if (Array.isArray(body)) return body;
+        return body?.data ?? [];
+      }
+      console.error(`Dashboard: failed to load ${label}`, r.reason);
+      return [];
+    };
 
-    } catch (error) {
-      console.error("Dashboard load failed:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load dashboard",
-        variant: "destructive",
-      });
-    } finally {
-      setDataLoading(false);
-    }
+    setMyIdeas(unwrap<IdeaRow>(ideasRes, "ideas"));
+    setSavedIdeas(unwrap<SavedRow>(savedRes, "saved-ideas"));
+    setAccessRequests(unwrap<AccessRequestRow>(accessRes, "access-requests"));
+    setRecentMessages(unwrap<MessageRow>(msgRes, "messages"));
+
+    setDataLoading(false);
   };
 
   load();
