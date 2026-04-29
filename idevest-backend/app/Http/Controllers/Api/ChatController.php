@@ -71,7 +71,7 @@ class ChatController extends Controller
 
         if (!$apiKey) {
             return response()->json([
-                'error' => 'AI provider is not configured. Set AI_API_KEY (or GROQ_API_KEY) in the server environment.',
+                'error' => 'AI provider is not configured. Set AI_API_KEY (or GEMINI_API_KEY / GROQ_API_KEY) in the server environment.',
             ], 503);
         }
 
