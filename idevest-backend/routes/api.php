@@ -6,7 +6,7 @@ use App\Http\Controllers\Api\{
     DealController, MessageController, KycController,
     AccessRequestController, NotificationController,
     ReportController, AdminController,
-    UploadController, ChatController
+    UploadController, ChatController, PhoneController
 };
 
 // ─── Public ───────────────────────────────────────────────
@@ -83,9 +83,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('chat/history',          [ChatController::class, 'clearHistory']);
     Route::post('chat/stream',             [ChatController::class, 'stream']);
 
-    // Phone OTP
-    Route::post('phone/send-otp',          [ProfileController::class, 'sendOtp']);
-    Route::post('phone/verify-otp',        [ProfileController::class, 'verifyOtp']);
+    // Phone OTP — Firebase Phone Auth. Frontend handles SMS delivery via
+    // the Firebase JS SDK; backend only verifies the resulting ID token.
+    Route::post('phone/verify-firebase-token', [PhoneController::class, 'verifyFirebaseToken']);
+    // Legacy mock endpoints (kept as no-ops so any stale frontend builds
+    // don't 404 — safe to remove once clients are upgraded).
+    Route::post('phone/send-otp',              [ProfileController::class, 'sendOtp']);
+    Route::post('phone/verify-otp',            [ProfileController::class, 'verifyOtp']);
 
     // Notifications
     Route::get('notifications',            [NotificationController::class, 'index']);

@@ -53,4 +53,17 @@ return [
         'model'    => env('AI_MODEL', 'llama-3.1-8b-instant'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Firebase (Phone OTP via Firebase Phone Auth)
+    |--------------------------------------------------------------------------
+    |
+    | Only the project_id is needed server-side — we verify Firebase-issued
+    | ID tokens using Google's public JWKS (no service-account key needed).
+    | Override FIREBASE_PROJECT_ID in production if you switch projects.
+    */
+    'firebase' => [
+        'project_id' => env('FIREBASE_PROJECT_ID', 'ideavest-otp'),
+    ],
+
 ];
