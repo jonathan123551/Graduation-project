@@ -11,12 +11,12 @@ export const ideaService = {
     return res.data;
   },
 
-  async create(data: any) {
+  async create(data: Record<string, unknown>) {
     const res = await api.post("/ideas", data);
     return res.data;
   },
 
-  async update(id: string, data: any) {
+  async update(id: string, data: Record<string, unknown>) {
     const res = await api.put(`/ideas/${id}`, data);
     return res.data;
   },

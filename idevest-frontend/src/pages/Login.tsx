@@ -6,6 +6,7 @@ import {
 } from "react-router-dom";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { authService } from "@/services/authService";
+import { getApiErrorMessage } from "@/lib/errors";
 import { useAuth } from "@/contexts/AuthContext";
 
 import { Button } from "@/components/ui/button";
@@ -92,15 +93,11 @@ export default function Login() {
           "/marketplace"
         );
       }
-    } catch (err: any) {
+    } catch (err) {
       toast({
         title: "Error",
-        description:
-          err?.response?.data
-            ?.message ||
-          "Login failed",
-        variant:
-          "destructive",
+        description: getApiErrorMessage(err, "Login failed"),
+        variant: "destructive",
       });
     } finally {
       setLoading(false);

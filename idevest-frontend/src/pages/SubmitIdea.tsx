@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, ComponentType } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -134,11 +134,17 @@ function DecisionBadge({
   );
 }
 
+interface ScoreCardProps {
+  label: string;
+  value: number;
+  icon: ComponentType<{ className?: string }>;
+}
+
 function ScoreCard({
   label,
   value,
   icon: Icon,
-}: any) {
+}: ScoreCardProps) {
   return (
     <div className="glass rounded-xl p-4 text-center">
       <Icon className="h-5 w-5 mx-auto mb-2 text-primary" />

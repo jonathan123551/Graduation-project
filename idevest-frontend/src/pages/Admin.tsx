@@ -43,7 +43,7 @@ type KycRow = {
   phone_number: string | null;
   id_card_front_url: string | null;
   id_card_back_url: string | null;
-  ai_verification_result: any;
+  ai_verification_result: unknown;
   created_at: string;
 };
 

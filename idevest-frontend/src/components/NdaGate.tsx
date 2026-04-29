@@ -1,5 +1,6 @@
 import { ReactNode, useEffect, useState } from "react";
 import api from "@/lib/api";
+import { getApiErrorMessage } from "@/lib/errors";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { Button } from "@/components/ui/button";
@@ -69,12 +70,13 @@ export default function NdaGate({
           ? "يمكنك الآن بدء الدردشة"
           : "You can now start chatting.",
       });
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: isAr ? "خطأ" : "Error",
-        description:
-          error?.response?.data?.message ||
-          (isAr ? "فشل التوقيع" : "Failed to sign NDA"),
+        description: getApiErrorMessage(
+          error,
+          isAr ? "فشل التوقيع" : "Failed to sign NDA"
+        ),
         variant: "destructive",
       });
     } finally {

@@ -131,7 +131,9 @@ export default function AiChat() {
         role: "user",
         content: text,
       });
-    } catch {}
+    } catch {
+      /* persisting chat history is best-effort */
+    }
 
     setMessages((prev) => [
       ...prev,
@@ -170,7 +172,9 @@ export default function AiChat() {
               role: "assistant",
               content: fullResponse,
             });
-          } catch {}
+          } catch {
+            /* persisting chat history is best-effort */
+          }
         },
 
         onError: (err) => {
@@ -201,7 +205,9 @@ export default function AiChat() {
   const clearChat = async () => {
     try {
       await api.delete("/chat/history");
-    } catch {}
+    } catch {
+      /* clearing server-side history is best-effort */
+    }
 
     setMessages([]);
   };

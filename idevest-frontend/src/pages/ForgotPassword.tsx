@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { authService } from "@/services/authService";
+import { getApiErrorMessage } from "@/lib/errors";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,11 +28,10 @@ export default function ForgotPassword() {
       });
 
       navigate("/login");
-    } catch (err: any) {
+    } catch (err) {
       toast({
         title: "Error",
-        description:
-          err?.response?.data?.message || "Failed to send reset link",
+        description: getApiErrorMessage(err, "Failed to send reset link"),
         variant: "destructive",
       });
     } finally {

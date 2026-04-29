@@ -96,12 +96,16 @@ export default function IdeaDetail() {
         try {
           const savedRes = await api.get(`/saved-ideas/check/${id}`);
           setSaved(savedRes.data.saved ?? false);
-        } catch {}
+        } catch {
+          /* ignore: saved-state check is best-effort */
+        }
 
         try {
           const accessRes = await api.get(`/access-requests/check/${id}`);
           setAccessStatus(accessRes.data.status ?? null);
-        } catch {}
+        } catch {
+          /* ignore: access-request check is best-effort */
+        }
       }
     } catch {
       setIdea(null);

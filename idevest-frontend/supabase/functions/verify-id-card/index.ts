@@ -46,10 +46,21 @@ async function runMindee(modelId: string, apiKey: string, imageUrl: string) {
   throw new Error("Mindee timeout");
 }
 
-function pickField(prediction: any, keys: string[]): string | null {
+type PredictionRecord = Record<string, unknown> & { fields?: Record<string, unknown> };
+
+function pickField(prediction: PredictionRecord | null | undefined, keys: string[]): string | null {
   if (!prediction) return null;
   for (const k of keys) {
-    const v = prediction?.[k]?.value ?? prediction?.fields?.[k]?.value ?? prediction?.[k];
+    const raw = prediction?.[k] as { value?: unknown } | unknown;
+    const fieldRaw = prediction?.fields?.[k] as { value?: unknown } | unknown;
+    const v =
+      (raw && typeof raw === "object" && "value" in (raw as object)
+        ? (raw as { value?: unknown }).value
+        : undefined) ??
+      (fieldRaw && typeof fieldRaw === "object" && "value" in (fieldRaw as object)
+        ? (fieldRaw as { value?: unknown }).value
+        : undefined) ??
+      raw;
     if (typeof v === "string" && v.trim()) return v.trim();
     if (typeof v === "number") return String(v);
   }
@@ -99,7 +110,7 @@ Deno.serve(async (req) => {
     }
 
     // === 1) Mindee OCR on the front side (where national ID + name + DOB live) ===
-    let mindeeResult: any = null;
+    let mindeeResult: unknown = null;
     let extractedId: string | null = null;
     let extractedName: string | null = null;
     let extractedDob: string | null = null;
@@ -117,7 +128,7 @@ Deno.serve(async (req) => {
     }
 
     // === 2) AI tampering / face presence check (Gemini Vision) ===
-    let aiResult: any = null;
+    let aiResult: unknown = null;
     if (LOVABLE_API_KEY) {
       try {
         const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {

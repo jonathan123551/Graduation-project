@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { profileService } from "@/services/profileService";
 
 export function useProfile() {
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] = useState<unknown>(null);
   const [loading, setLoading] = useState(true);
 
   const loadProfile = async () => {

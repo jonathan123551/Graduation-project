@@ -1,5 +1,22 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+
+interface CompanyRecord {
+  company_name?: string;
+  sector?: string;
+  description?: string;
+  problem?: string;
+  solution?: string;
+  target_audience?: string;
+  team_size?: string | number | null;
+  founded_year?: string | number | null;
+  total_funding_usd?: number | null;
+  funding_round?: string | null;
+  risk_score?: string | number | null;
+  success_probability?: string | number | null;
+  market_share_pct?: string | number | null;
+  status?: string | null;
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -15,7 +32,7 @@ interface ProjectData {
 }
 
 // RAG: fetch most relevant similar companies from dataset
-async function fetchSimilarCompanies(supabase: any, projectData: ProjectData) {
+async function fetchSimilarCompanies(supabase: SupabaseClient, projectData: ProjectData) {
   // Get companies from same sector first; fall back to all
   const { data: sectorMatches } = await supabase
     .from("companies_dataset")
@@ -37,7 +54,7 @@ async function fetchSimilarCompanies(supabase: any, projectData: ProjectData) {
   return companies;
 }
 
-function formatCompaniesContext(companies: any[]): string {
+function formatCompaniesContext(companies: CompanyRecord[]): string {
   if (!companies || companies.length === 0) return "";
   const lines = companies.map((c, i) => {
     const fund = c.total_funding_usd ? `$${(c.total_funding_usd / 1000000).toFixed(2)}M (${c.funding_round || 'N/A'})` : 'N/A';

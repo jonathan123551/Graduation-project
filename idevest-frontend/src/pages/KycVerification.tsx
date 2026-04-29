@@ -3,6 +3,7 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/i18n/LanguageContext";
 import api from "@/lib/api";
+import { getApiErrorMessage } from "@/lib/errors";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -151,11 +152,10 @@ export default function KycVerification() {
       });
 
       return data.path;
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Error",
-        description:
-          error?.response?.data?.message || "Upload failed",
+        description: getApiErrorMessage(error, "Upload failed"),
         variant: "destructive",
       });
 
@@ -204,11 +204,10 @@ export default function KycVerification() {
 
     try {
       await api.post("/kyc", payload);
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Error",
-        description:
-          error?.response?.data?.message || "Failed",
+        description: getApiErrorMessage(error, "Failed"),
         variant: "destructive",
       });
 
