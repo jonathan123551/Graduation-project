@@ -66,4 +66,22 @@ return [
         'project_id' => env('FIREBASE_PROJECT_ID', 'ideavest-otp'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Mindee (OCR / KYC ID-card verification)
+    |--------------------------------------------------------------------------
+    |
+    | Used server-side to extract the national-ID number from uploaded
+    | ID-card photos and validate it against the number the user typed.
+    |
+    | Override MINDEE_API_KEY / MINDEE_MODEL_ID in production. Default
+    | values are scoped to the graduation-project test account and
+    | should be rotated before real users land.
+    */
+    'mindee' => [
+        'api_key'        => env('MINDEE_API_KEY', 'md_5598TiCfWU3QQI6dixEMNNlMhGmyhiLm6wedg_c7-no'),
+        'model_id'       => env('MINDEE_MODEL_ID', '23dcda1f-bd27-4333-a5b9-a3f6e02a4509'),
+        'min_confidence' => (float) env('MINDEE_MIN_CONFIDENCE', 0.8),
+    ],
+
 ];

@@ -73,6 +73,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('kyc',                      [KycController::class, 'show']);
     Route::post('kyc/submit',              [KycController::class, 'submit']);
     Route::post('kyc/upload',              [KycController::class, 'upload']);
+    // Automated ID-card verification via Mindee OCR.
+    Route::post('kyc/verify-id-card',      [KycController::class, 'verifyIdCard']);
 
     // Generic authenticated file upload (used by SubmitIdea etc.)
     Route::post('upload',                  [UploadController::class, 'store']);
