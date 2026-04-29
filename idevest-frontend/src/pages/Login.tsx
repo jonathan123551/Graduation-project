@@ -26,7 +26,7 @@ export default function Login() {
   const isAr = language === "ar";
 
   const navigate = useNavigate();
-  const { user, loading: authLoading } =
+  const { user, loading: authLoading, setUser } =
     useAuth();
 
   const [email, setEmail] = useState("");
@@ -77,6 +77,9 @@ export default function Login() {
           email,
           password,
         });
+
+      // Populate auth context so ProtectedRoute sees the user immediately.
+      setUser(data.user ?? null);
 
       const role =
         data.user?.role;
