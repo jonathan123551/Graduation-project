@@ -30,9 +30,16 @@ export function AuthProvider({
 }: {
   children: ReactNode;
 }) {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [userRole, setUserRole] = useState<string | null>(null);
+  const [user, setUserState] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Keep userRole derived from user so callers can set user (e.g. after login)
+  // without having to also remember to set the role.
+  const userRole = user?.role ?? null;
+
+  const setUser = (next: AuthUser | null) => {
+    setUserState(next);
+  };
 
   const loadUser = async () => {
     const token = localStorage.getItem("auth_token");
@@ -45,8 +52,7 @@ export function AuthProvider({
     try {
       const data = (await authService.me()) as AuthUser;
 
-      setUser(data);
-      setUserRole(data.role || null);
+      setUserState(data);
     } catch {
       localStorage.removeItem("auth_token");
       localStorage.removeItem("auth_user");
@@ -66,8 +72,7 @@ export function AuthProvider({
       /* swallow: logout failure shouldn't block local cleanup */
     }
 
-    setUser(null);
-    setUserRole(null);
+    setUserState(null);
   };
 
   return (
