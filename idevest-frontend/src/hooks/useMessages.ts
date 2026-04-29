@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import api from "@/lib/api";
 
 export function useMessages() {
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState<unknown[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadMessages = async () => {

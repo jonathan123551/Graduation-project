@@ -7,6 +7,7 @@ import {
 
 import { useLanguage } from "@/i18n/LanguageContext";
 import { authService } from "@/services/authService";
+import { getApiErrorMessage } from "@/lib/errors";
 import { useAuth } from "@/contexts/AuthContext";
 
 import { Button } from "@/components/ui/button";
@@ -216,17 +217,11 @@ export default function Register() {
             "/marketplace"
           );
         }
-      } catch (err: any) {
+      } catch (err) {
         toast({
           title: "Error",
-          description:
-            err
-              ?.response
-              ?.data
-              ?.message ||
-            "Registration failed",
-          variant:
-            "destructive",
+          description: getApiErrorMessage(err, "Registration failed"),
+          variant: "destructive",
         });
       } finally {
         setLoading(false);

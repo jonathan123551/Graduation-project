@@ -40,7 +40,7 @@ function normalizeText(text: string): string {
 // Step 2: Strip separators between digits (spaces, dashes, dots, slashes, hyphens, brackets)
 function stripDigitSeparators(text: string): string {
   // Replace separator chars between digits with nothing
-  return text.replace(/(\d)[\s\-\._/\\(),\[\]<>~`*'"]+(?=\d)/g, '$1');
+  return text.replace(/(\d)[\s\-._/\\(),[\]<>~`*'"]+(?=\d)/g, '$1');
 }
 
 // Step 3: Convert spelled-out numbers (English + Arabic) to digits
@@ -76,16 +76,16 @@ const PATTERNS = {
   intlPhone: /\+\d{7,15}/,
 
   // Email — handles obfuscation like [at], (at), أت, dot, نقطة
-  email: /[\w.\-+]{2,}\s*(?:@|\[at\]|\(at\)|＠|أت|اَت|\bat\b)\s*[\w.\-]{2,}\s*(?:\.|dot|دوت|نقطة|\[dot\]|\(dot\))\s*[a-z]{2,10}/i,
+  email: /[\w.\-+]{2,}\s*(?:@|\[at\]|\(at\)|＠|أت|اَت|\bat\b)\s*[\w.-]{2,}\s*(?:\.|dot|دوت|نقطة|\[dot\]|\(dot\))\s*[a-z]{2,10}/i,
 
   // Standard email
-  emailStandard: /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/,
+  emailStandard: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/,
 
   // URL — http/https/www/short links
   url: /(?:https?:\/\/|www\.|ftp:\/\/)[^\s]{2,}/i,
 
   // Domain extensions
-  domain: /\b[a-zA-Z0-9\-]{2,}\.(com|net|org|io|me|co|app|dev|info|biz|xyz|ly|gl|sh|tv|ai|gg|tk|cc|ru|de|fr|uk|eg|sa|ae|qa|kw|bh|om|ma|tn|dz|ye|sy|jo|lb|ps|iq|sd|so|mr|km|dj|ng|ke|gh|tz|ug|et|cm|sn|ml|bf|ne|td|cf|cg|cd|ga|gq|ao|mz|zw|zm|mw|bw|sz|ls|na|za|mg|mu|sc|re|yt)\b/i,
+  domain: /\b[a-zA-Z0-9-]{2,}\.(com|net|org|io|me|co|app|dev|info|biz|xyz|ly|gl|sh|tv|ai|gg|tk|cc|ru|de|fr|uk|eg|sa|ae|qa|kw|bh|om|ma|tn|dz|ye|sy|jo|lb|ps|iq|sd|so|mr|km|dj|ng|ke|gh|tz|ug|et|cm|sn|ml|bf|ne|td|cf|cg|cd|ga|gq|ao|mz|zw|zm|mw|bw|sz|ls|na|za|mg|mu|sc|re|yt)\b/i,
 
   // Social platform names + handles
   social: /(facebook|fb|instagram|insta|ig|whatsapp|whats|wa|telegram|tg|twitter|x\.com|linkedin|linked.in|snapchat|snap|tiktok|tik.tok|signal|viber|discord|disc|wechat|line|skype|zoom|gmeet|google.meet|hangouts|messenger|kik|threema|wickr|session)/i,
@@ -94,7 +94,7 @@ const PATTERNS = {
   arabicSocial: /(واتساب|واتس|واتسب|فيسبوك|فيس بوك|فيس|انستجرام|انستقرام|انستا|انستغرام|تليجرام|تلجرام|تلغرام|تويتر|اكس|لينكدان|لينكد|سناب|سنابشات|تيك توك|تيكتوك|ديسكورد|ديسكور|ايميل|إيميل|بريد|جيميل|جي ميل|ياهو|هوتميل|اوتلوك|أوتلوك|زووم|سكايب|واي بر|فايبر|سيجنال|وي شات)/i,
 
   // Social handles (@username)
-  handle: /@[\w.\-]{3,30}/,
+  handle: /@[\w.-]{3,30}/,
 
   // Phone number context words (English + Arabic)
   phoneContext: /(call me|call my|my number|my phone|my mobile|my cell|reach me|contact me|whatsapp me|text me|كلمني|اتصل|رقمي|موبايلي|نمرتي|تليفوني|تواصل معي|واتس\s*اب|دوس على)/i,

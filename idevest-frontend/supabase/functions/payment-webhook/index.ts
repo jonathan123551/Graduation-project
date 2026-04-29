@@ -9,7 +9,33 @@ const corsHeaders = {
 };
 
 // Paymob HMAC verification (SHA-512 of concatenated transaction fields)
-async function verifyPaymobHmac(obj: any, providedHmac: string, secret: string): Promise<boolean> {
+interface PaymobTransactionLike {
+  obj?: PaymobTransactionLike;
+  amount_cents?: unknown;
+  created_at?: unknown;
+  currency?: unknown;
+  error_occured?: unknown;
+  has_parent_transaction?: unknown;
+  id?: unknown;
+  integration_id?: unknown;
+  is_3d_secure?: unknown;
+  is_auth?: unknown;
+  is_capture?: unknown;
+  is_refunded?: unknown;
+  is_standalone_payment?: unknown;
+  is_voided?: unknown;
+  order?: { id?: unknown };
+  owner?: unknown;
+  pending?: unknown;
+  source_data?: { pan?: unknown; sub_type?: unknown; type?: unknown };
+  success?: unknown;
+}
+
+async function verifyPaymobHmac(
+  obj: PaymobTransactionLike,
+  providedHmac: string,
+  secret: string
+): Promise<boolean> {
   const o = obj.obj || obj;
   const concat = [
     o.amount_cents, o.created_at, o.currency, o.error_occured,

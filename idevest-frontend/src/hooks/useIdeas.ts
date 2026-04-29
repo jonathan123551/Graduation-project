@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { ideaService } from "@/services/ideaService";
 
 export function useIdeas() {
-  const [ideas, setIdeas] = useState<any[]>([]);
+  const [ideas, setIdeas] = useState<unknown[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadIdeas = async () => {

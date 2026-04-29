@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/i18n/LanguageContext";
 import api from "@/lib/api";
+import { getApiErrorMessage } from "@/lib/errors";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -126,12 +127,10 @@ export default function MessageThread({
       }
 
       setInput("");
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: t.common.error,
-        description:
-          error?.response?.data?.message ||
-          "Failed to send",
+        description: getApiErrorMessage(error, "Failed to send"),
         variant: "destructive",
       });
     } finally {

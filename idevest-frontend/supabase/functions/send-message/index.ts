@@ -9,7 +9,7 @@ const corsHeaders = {
 
 // Mirror of client-side filter (server-side authoritative)
 function normalizeText(text: string): string {
-  let t = text.replace(/[\u200B-\u200F\u202A-\u202E\u2060-\u2064\uFEFF]/g, '').normalize('NFKC');
+  const t = text.replace(/[\u200B-\u200F\u202A-\u202E\u2060-\u2064\uFEFF]/g, '').normalize('NFKC');
   const charMap: Record<string, string> = {
     'O':'0','o':'0','Q':'0','I':'1','l':'1','|':'1','L':'1','Z':'2','z':'2','E':'3','e':'3',
     'A':'4','a':'4','@':'4','S':'5','s':'5','$':'5','G':'6','b':'6','T':'7','t':'7','B':'8','g':'9','q':'9',
@@ -18,7 +18,7 @@ function normalizeText(text: string): string {
   return t.split('').map(c => charMap[c] || c).join('');
 }
 function stripSeparators(text: string): string {
-  return text.replace(/(\d)[\s\-\._/\\(),\[\]<>~`*'"]+(?=\d)/g, '$1');
+  return text.replace(/(\d)[\s\-._/\\(),[\]<>~`*'"]+(?=\d)/g, '$1');
 }
 function convertSpelled(text: string): string {
   const map: Record<string,string> = {
@@ -36,13 +36,13 @@ function detectViolations(text: string): string[] {
   if (/(\+?20|0)?1[0125]\d{8}/.test(spelled)) detected.push('egyptian_phone');
   else if (/\+\d{7,15}/.test(spelled)) detected.push('intl_phone');
   else if (/\d{7,15}/.test(spelled)) detected.push('phone');
-  if (/[\w.\-+]{2,}\s*(?:@|\[at\]|\(at\)|أت|\bat\b)\s*[\w.\-]{2,}\s*(?:\.|dot|دوت|نقطة)\s*[a-z]{2,10}/i.test(norm)) detected.push('email_obf');
-  if (/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/.test(norm)) detected.push('email');
+  if (/[\w.\-+]{2,}\s*(?:@|\[at\]|\(at\)|أت|\bat\b)\s*[\w.-]{2,}\s*(?:\.|dot|دوت|نقطة)\s*[a-z]{2,10}/i.test(norm)) detected.push('email_obf');
+  if (/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/.test(norm)) detected.push('email');
   if (/(?:https?:\/\/|www\.)[^\s]{2,}/i.test(text)) detected.push('url');
-  if (/\b[a-zA-Z0-9\-]{2,}\.(com|net|org|io|me|co|app|dev|info|biz|xyz|ly|gl|sh|tv|ai|gg|tk|cc|eg|sa|ae)\b/i.test(text)) detected.push('domain');
+  if (/\b[a-zA-Z0-9-]{2,}\.(com|net|org|io|me|co|app|dev|info|biz|xyz|ly|gl|sh|tv|ai|gg|tk|cc|eg|sa|ae)\b/i.test(text)) detected.push('domain');
   if (/(facebook|fb|instagram|insta|whatsapp|wa|telegram|twitter|linkedin|snapchat|tiktok|discord|skype|signal|viber)/i.test(text)) detected.push('social');
   if (/(واتساب|فيسبوك|انستجرام|انستا|تليجرام|تلجرام|تويتر|سناب|تيكتوك|ديسكورد|جيميل|ياهو|هوتميل)/i.test(text)) detected.push('arabic_social');
-  if (/@[\w.\-]{3,30}/.test(text)) detected.push('handle');
+  if (/@[\w.-]{3,30}/.test(text)) detected.push('handle');
   return detected;
 }
 

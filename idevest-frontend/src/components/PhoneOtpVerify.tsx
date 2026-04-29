@@ -1,5 +1,6 @@
 import { useState } from "react";
 import api from "@/lib/api";
+import { getApiErrorMessage } from "@/lib/errors";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -55,12 +56,10 @@ export default function PhoneOtpVerify({
           ? "تم إرسال الكود إلى هاتفك"
           : "Code sent to your phone",
       });
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: isAr ? "خطأ" : "Error",
-        description:
-          error?.response?.data?.message ||
-          "Failed to send code",
+        description: getApiErrorMessage(error, "Failed to send code"),
         variant: "destructive",
       });
     } finally {
@@ -95,14 +94,12 @@ export default function PhoneOtpVerify({
       });
 
       onVerified(phone.trim());
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: isAr
           ? "فشل التحقق"
           : "Verification failed",
-        description:
-          error?.response?.data?.message ||
-          "Invalid code",
+        description: getApiErrorMessage(error, "Invalid code"),
         variant: "destructive",
       });
     } finally {

@@ -8,12 +8,18 @@ import {
 
 import { authService } from "@/services/authService";
 
+export interface AuthUser {
+  id?: string | number;
+  role?: string;
+  [key: string]: unknown;
+}
+
 interface AuthContextType {
-  user: any;
+  user: AuthUser | null;
   userRole: string | null;
   loading: boolean;
   isAuthenticated: boolean;
-  setUser: (user: any) => void;
+  setUser: (user: AuthUser | null) => void;
   logout: () => Promise<void>;
 }
 
@@ -24,7 +30,7 @@ export function AuthProvider({
 }: {
   children: ReactNode;
 }) {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -37,7 +43,7 @@ export function AuthProvider({
     }
 
     try {
-      const data = await authService.me();
+      const data = (await authService.me()) as AuthUser;
 
       setUser(data);
       setUserRole(data.role || null);
@@ -56,7 +62,9 @@ export function AuthProvider({
   const logout = async () => {
     try {
       await authService.logout();
-    } catch {}
+    } catch {
+      /* swallow: logout failure shouldn't block local cleanup */
+    }
 
     setUser(null);
     setUserRole(null);

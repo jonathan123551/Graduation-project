@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { authService } from "@/services/authService";
+import { getApiErrorMessage } from "@/lib/errors";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,11 +37,10 @@ export default function ResetPassword() {
       });
 
       navigate("/login");
-    } catch (err: any) {
+    } catch (err) {
       toast({
         title: "Error",
-        description:
-          err?.response?.data?.message || "Reset failed",
+        description: getApiErrorMessage(err, "Reset failed"),
         variant: "destructive",
       });
     } finally {
