@@ -16,7 +16,7 @@ interface RegisterData {
 
 export const authService = {
   async login(data: LoginData) {
-    const res = await api.post("/login", data);
+    const res = await api.post("/auth/login", data);
 
     localStorage.setItem("auth_token", res.data.token);
     localStorage.setItem("auth_user", JSON.stringify(res.data.user));
@@ -25,7 +25,7 @@ export const authService = {
   },
 
   async register(data: RegisterData) {
-    const res = await api.post("/register", data);
+    const res = await api.post("/auth/register", data);
 
     localStorage.setItem("auth_token", res.data.token);
     localStorage.setItem("auth_user", JSON.stringify(res.data.user));
@@ -34,14 +34,14 @@ export const authService = {
   },
 
   async logout() {
-    await api.post("/logout");
+    await api.post("/auth/logout");
 
     localStorage.removeItem("auth_token");
     localStorage.removeItem("auth_user");
   },
 
   async me() {
-    const res = await api.get("/me");
+    const res = await api.get("/auth/me");
     return res.data;
   },
 };
