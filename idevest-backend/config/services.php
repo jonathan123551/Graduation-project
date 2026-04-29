@@ -40,16 +40,17 @@ return [
     | AI provider (OpenAI-compatible chat completions)
     |--------------------------------------------------------------------------
     |
-    | Defaults target Google Gemini via its OpenAI-compatible endpoint
-    | (https://ai.google.dev/gemini-api/docs/openai). Override
-    | `AI_BASE_URL` / `AI_MODEL` / `AI_API_KEY` to swap providers (Groq,
-    | OpenAI, etc.). For backward compatibility we also accept the
-    | legacy `GROQ_API_KEY` / `GEMINI_API_KEY` env vars as the key.
+    | Defaults target Groq (https://console.groq.com/) which is fully
+    | OpenAI-API-compatible, free with generous limits, and has no
+    | billing setup. Override `AI_BASE_URL` / `AI_MODEL` / `AI_API_KEY`
+    | to swap providers (Gemini, OpenAI, etc.). For backward compatibility
+    | we also accept the legacy `GROQ_API_KEY` / `GEMINI_API_KEY` env
+    | vars as the key.
     */
     'ai' => [
-        'key'      => env('AI_API_KEY', env('GEMINI_API_KEY', env('GROQ_API_KEY'))),
-        'base_url' => env('AI_BASE_URL', 'https://generativelanguage.googleapis.com/v1beta/openai'),
-        'model'    => env('AI_MODEL', 'gemini-2.0-flash'),
+        'key'      => env('AI_API_KEY', env('GROQ_API_KEY', env('GEMINI_API_KEY'))),
+        'base_url' => env('AI_BASE_URL', 'https://api.groq.com/openai/v1'),
+        'model'    => env('AI_MODEL', 'llama-3.1-8b-instant'),
     ],
 
 ];
