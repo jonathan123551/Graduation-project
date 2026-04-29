@@ -178,54 +178,57 @@ export default function KycVerification() {
       return;
     }
 
-    setSaving(true);
-
-    let frontPath = kyc?.id_card_front_url || null;
-    let backPath = kyc?.id_card_back_url || null;
-
-    if (frontFile) {
-      frontPath = await uploadImage(frontFile, "front");
+    if (!frontFile && !kyc?.id_card_front_url) {
+      toast({
+        title: "Error",
+        description:
+          "Please upload a photo of the front of your ID card for verification",
+        variant: "destructive",
+      });
+      return;
     }
 
     if (backFile) {
-      backPath = await uploadImage(backFile, "back");
+      // Back image is optional but we still want it stored for the record.
+      await uploadImage(backFile, "back");
     }
 
-    if (!frontPath || !backPath) {
-      setSaving(false);
-      return;
-    }
-
-    const payload = {
-      ...form,
-      id_card_front_url: frontPath,
-      id_card_back_url: backPath,
-    };
-
-    try {
-      await api.post("/kyc", payload);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: getApiErrorMessage(error, "Failed"),
-        variant: "destructive",
-      });
-
-      setSaving(false);
-      return;
-    }
-
-    setSaving(false);
+    setSaving(true);
     setAiChecking(true);
 
     try {
-      await api.post("/kyc/verify-ai", {
-        frontPath,
-        backPath,
-        userEnteredNationalId: form.national_id,
+      const formData = new FormData();
+      if (frontFile) formData.append("id_card", frontFile);
+      formData.append("national_id", form.national_id);
+      formData.append("full_legal_name", form.full_legal_name);
+      if (form.date_of_birth)
+        formData.append("date_of_birth", form.date_of_birth);
+      if (form.nationality) formData.append("nationality", form.nationality);
+      if (form.address) formData.append("address", form.address);
+
+      const { data } = await api.post("/kyc/verify-id-card", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      if (data?.kyc) setKyc(data.kyc);
+
+      toast({
+        title: data?.success ? "Verified" : "Rejected",
+        description: data?.message ?? "KYC submitted",
+        variant: data?.success ? "default" : "destructive",
       });
     } catch (error) {
-      console.log(error);
+      const fallback = kyc?.id_card_front_url
+        ? "Verification failed — please re-upload a sharper photo"
+        : "Failed";
+      toast({
+        title: "Error",
+        description: getApiErrorMessage(error, fallback),
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+      setAiChecking(false);
     }
 
     try {
@@ -234,13 +237,6 @@ export default function KycVerification() {
     } catch (error) {
       console.log(error);
     }
-
-    setAiChecking(false);
-
-    toast({
-      title: "Success",
-      description: "KYC submitted successfully",
-    });
   };
 
   const status: KycStatus =
