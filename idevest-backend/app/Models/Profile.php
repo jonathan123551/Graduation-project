@@ -6,9 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class Profile extends Model
 {
-    protected $keyType = 'string';
-    public $incrementing = false;
-
     protected $fillable = [
         'user_id',
         'full_name',

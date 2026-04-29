@@ -14,10 +14,15 @@ import { Globe, Menu, X, User, LogOut, LayoutDashboard, Zap, Moon, Sun, ShieldCh
 
 export default function Navbar() {
   const { t, language, setLanguage } = useLanguage();
-  const { user, signOut, userRole } = useAuth();
+  const { user, logout, userRole } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login", { replace: true });
+  };
 
   const navLinks = [
     { label: t.nav.home, to: "/" },
@@ -79,7 +84,7 @@ export default function Navbar() {
                     <Shield className="h-4 w-4 me-2" />{language === "ar" ? "لوحة الأدمن" : "Admin Panel"}
                   </DropdownMenuItem>
                 )}
-                <DropdownMenuItem onClick={signOut}>
+                <DropdownMenuItem onClick={handleLogout}>
                   <LogOut className="h-4 w-4 me-2" />{t.nav.logout}
                 </DropdownMenuItem>
               </DropdownMenuContent>

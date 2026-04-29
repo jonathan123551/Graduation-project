@@ -66,13 +66,17 @@ export function AuthProvider({
   }, []);
 
   const logout = async () => {
+    // Clear local auth state first so no subsequent request reuses the old
+    // token even if the server call hangs or fails.
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("auth_user");
+    setUserState(null);
+
     try {
       await authService.logout();
     } catch {
       /* swallow: logout failure shouldn't block local cleanup */
     }
-
-    setUserState(null);
   };
 
   return (

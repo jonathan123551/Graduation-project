@@ -94,9 +94,11 @@ export default function Admin() {
         api.get("/admin/ideas"),
       ]);
 
-      setKycList(kycRes.data.data ?? []);
-      setUsers(usersRes.data.data ?? []);
-      setIdeas(ideasRes.data.data ?? []);
+      // Laravel returns plain arrays; keep the `.data.data` fallback for
+      // any future paginated wrapping.
+      setKycList(kycRes.data?.data ?? kycRes.data ?? []);
+      setUsers(usersRes.data?.data ?? usersRes.data ?? []);
+      setIdeas(ideasRes.data?.data ?? ideasRes.data ?? []);
     } catch {
       toast({
         title: "Error",

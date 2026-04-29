@@ -5,7 +5,8 @@ use App\Http\Controllers\Api\{
     AuthController, ProfileController, IdeaController,
     DealController, MessageController, KycController,
     AccessRequestController, NotificationController,
-    ReportController, AdminController
+    ReportController, AdminController,
+    UploadController, ChatController
 };
 
 // ─── Public ───────────────────────────────────────────────
@@ -70,6 +71,16 @@ Route::middleware('auth:sanctum')->group(function () {
     // KYC
     Route::get('kyc',                      [KycController::class, 'show']);
     Route::post('kyc/submit',              [KycController::class, 'submit']);
+    Route::post('kyc/upload',              [KycController::class, 'upload']);
+
+    // Generic authenticated file upload (used by SubmitIdea etc.)
+    Route::post('upload',                  [UploadController::class, 'store']);
+
+    // AI chat
+    Route::get('chat/history',             [ChatController::class, 'history']);
+    Route::post('chat/history',            [ChatController::class, 'storeMessage']);
+    Route::delete('chat/history',          [ChatController::class, 'clearHistory']);
+    Route::post('chat/stream',             [ChatController::class, 'stream']);
 
     // Phone OTP
     Route::post('phone/send-otp',          [ProfileController::class, 'sendOtp']);
@@ -88,15 +99,20 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(function () {
     Route::get('stats',                    [AdminController::class, 'stats']);
     Route::get('users',                    [AdminController::class, 'users']);
-    Route::patch('users/{user}/block',     [AdminController::class, 'blockUser']);
-    Route::patch('users/{user}/unblock',   [AdminController::class, 'unblockUser']);
+    Route::match(['post','patch'], 'users/{user}/block',     [AdminController::class, 'blockUser']);
+    Route::match(['post','patch'], 'users/{user}/unblock',   [AdminController::class, 'unblockUser']);
+    Route::post('grant-role',              [AdminController::class, 'grantRole']);
+
     Route::get('ideas',                    [AdminController::class, 'ideas']);
-    Route::patch('ideas/{idea}/approve',   [AdminController::class, 'approveIdea']);
-    Route::patch('ideas/{idea}/reject',    [AdminController::class, 'rejectIdea']);
+    Route::match(['post','patch'], 'ideas/{idea}/approve',   [AdminController::class, 'approveIdea']);
+    Route::match(['post','patch'], 'ideas/{idea}/reject',    [AdminController::class, 'rejectIdea']);
+    Route::match(['post','patch'], 'ideas/{idea}/toggle',    [AdminController::class, 'toggleIdea']);
+
     Route::get('kyc',                      [AdminController::class, 'kycList']);
-    Route::patch('kyc/{kyc}/approve',      [AdminController::class, 'approveKyc']);
-    Route::patch('kyc/{kyc}/reject',       [AdminController::class, 'rejectKyc']);
+    Route::match(['post','patch'], 'kyc/{kyc}/approve',      [AdminController::class, 'approveKyc']);
+    Route::match(['post','patch'], 'kyc/{kyc}/reject',       [AdminController::class, 'rejectKyc']);
+
     Route::get('reports',                  [AdminController::class, 'reports']);
-    Route::patch('reports/{report}/resolve',[AdminController::class,'resolveReport']);
+    Route::match(['post','patch'], 'reports/{report}/resolve',[AdminController::class,'resolveReport']);
     Route::get('analytics',                [AdminController::class, 'analytics']);
 });
