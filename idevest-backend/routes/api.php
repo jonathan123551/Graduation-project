@@ -6,7 +6,8 @@ use App\Http\Controllers\Api\{
     DealController, MessageController, KycController,
     AccessRequestController, NotificationController,
     ReportController, AdminController,
-    UploadController, ChatController, PhoneController
+    UploadController, ChatController, PhoneController,
+    PaymentController
 };
 
 // ─── Public ───────────────────────────────────────────────
@@ -76,6 +77,12 @@ Route::middleware('auth:sanctum')->group(function () {
     // Automated ID-card verification via Mindee OCR.
     Route::post('kyc/verify-id-card',      [KycController::class, 'verifyIdCard']);
 
+    // Paymob escrow payments. Webhook is public (registered outside this
+    // group, below).
+    Route::post('payments/start',              [PaymentController::class, 'start']);
+    Route::post('payments/{id}/capture',       [PaymentController::class, 'capture']);
+    Route::post('payments/{id}/void',          [PaymentController::class, 'void']);
+
     // Generic authenticated file upload (used by SubmitIdea etc.)
     Route::post('upload',                  [UploadController::class, 'store']);
 
@@ -123,3 +130,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
     Route::match(['post','patch'], 'reports/{report}/resolve',[AdminController::class,'resolveReport']);
     Route::get('analytics',                [AdminController::class, 'analytics']);
 });
+
+// ─── Public webhook endpoints ─────────────────────────────
+// Paymob calls this when a payment succeeds/fails on its iframe.
+Route::post('payments/webhook',            [PaymentController::class, 'webhook']);
