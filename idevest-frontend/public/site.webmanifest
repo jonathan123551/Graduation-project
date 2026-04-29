@@ -1,0 +1,13 @@
+{
+  "name": "IDEVEST",
+  "short_name": "IDEVEST",
+  "description": "IDEVEST — AI-powered startup investment platform",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ],
+  "theme_color": "#1fb05d",
+  "background_color": "#0b0f1a",
+  "display": "standalone",
+  "start_url": "/"
+}
