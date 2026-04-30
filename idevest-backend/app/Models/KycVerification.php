@@ -6,21 +6,25 @@ use Illuminate\Database\Eloquent\Model;
 
 class KycVerification extends Model
 {
-    protected $keyType = 'string';
-    public $incrementing = false;
-
     protected $fillable = [
         'user_id',
+        'full_legal_name',
+        'national_id',
+        'date_of_birth',
+        'nationality',
+        'address',
+        'id_card_front',
+        'id_card_back',
+        'ai_verification_result',
         'status',
-        'id_document_url',
-        'selfie_url',
         'rejection_reason',
         'reviewed_at',
-        'reviewed_by'
+        'reviewed_by',
     ];
 
     protected $casts = [
-        'reviewed_at' => 'datetime'
+        'date_of_birth' => 'date',
+        'reviewed_at'   => 'datetime',
     ];
 
     public function user()
