@@ -38,10 +38,10 @@ class KycController extends Controller
 
     public function show(Request $request): JsonResponse
     {
-        $kyc = KycVerification::firstOrCreate(
-            ['user_id' => $request->user()->id],
-            ['status'  => 'pending']
-        );
+        // Don't auto-create — kyc_verifications has NOT NULL columns that
+        // legitimately stay null until the user submits. Frontend handles
+        // the null/empty case via `kyc?.id_card_front_url` etc.
+        $kyc = KycVerification::where('user_id', $request->user()->id)->first();
 
         return response()->json($kyc);
     }

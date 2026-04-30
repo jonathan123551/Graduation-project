@@ -167,4 +167,41 @@ class IdeaController extends Controller
                 ->get()
         );
     }
+
+    /**
+     * Frontend-friendly aliases under `/saved-ideas/...` paths so
+     * IdeaDetail.tsx (which posts/deletes/`/check/` against /saved-ideas)
+     * works alongside the original `/ideas/{id}/save` REST routes.
+     */
+    public function savedAlias(Request $request)
+    {
+        $data = $request->validate([
+            'idea_id' => 'required|exists:ideas,id',
+        ]);
+
+        SavedIdea::firstOrCreate([
+            'user_id' => $request->user()->id,
+            'idea_id' => $data['idea_id'],
+        ]);
+
+        return response()->json(['message' => 'Saved', 'saved' => true]);
+    }
+
+    public function unsaveAlias(Request $request, $ideaId)
+    {
+        SavedIdea::where('user_id', $request->user()->id)
+            ->where('idea_id', $ideaId)
+            ->delete();
+
+        return response()->json(['message' => 'Unsaved', 'saved' => false]);
+    }
+
+    public function checkSaved(Request $request, $ideaId)
+    {
+        $exists = SavedIdea::where('user_id', $request->user()->id)
+            ->where('idea_id', $ideaId)
+            ->exists();
+
+        return response()->json(['saved' => $exists]);
+    }
 }

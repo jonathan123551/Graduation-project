@@ -7,7 +7,7 @@ use App\Http\Controllers\Api\{
     AccessRequestController, NotificationController,
     ReportController, AdminController,
     UploadController, ChatController, PhoneController,
-    PaymentController
+    PaymentController, NdaController
 };
 
 // ─── Public ───────────────────────────────────────────────
@@ -35,8 +35,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('profile/avatar',          [ProfileController::class, 'uploadAvatar']);
     Route::get('profile/{userId}',         [ProfileController::class, 'showById']);
 
-    // Gate check (used by useUserGate hook)
+    // Gate check (used by useUserGate hook). Both paths point at the
+    // same handler — frontend calls /user/gate, older code calls /me/gate.
     Route::get('me/gate',                  [ProfileController::class, 'gate']);
+    Route::get('user/gate',                [ProfileController::class, 'gate']);
 
     // Ideas
     Route::post('ideas',                   [IdeaController::class, 'store']);
@@ -49,10 +51,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('ideas/{idea}/save',       [IdeaController::class, 'save']);
     Route::delete('ideas/{idea}/save',     [IdeaController::class, 'unsave']);
     Route::get('saved-ideas',              [IdeaController::class, 'savedIdeas']);
+    // Frontend-friendly aliases under /saved-ideas/...
+    Route::post('saved-ideas',             [IdeaController::class, 'savedAlias']);
+    Route::delete('saved-ideas/{ideaId}',  [IdeaController::class, 'unsaveAlias']);
+    Route::get('saved-ideas/check/{ideaId}', [IdeaController::class, 'checkSaved']);
 
     // Access requests
     Route::get('access-requests',          [AccessRequestController::class, 'index']);
     Route::post('access-requests',         [AccessRequestController::class, 'store']);
+    Route::get('access-requests/check/{ideaId}', [AccessRequestController::class, 'check']);
     Route::patch('access-requests/{req}/approve', [AccessRequestController::class, 'approve']);
     Route::patch('access-requests/{req}/reject',  [AccessRequestController::class, 'reject']);
 
@@ -68,7 +75,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('messages/{userId}',        [MessageController::class, 'thread']);
     Route::post('messages',                [MessageController::class, 'store']);
     Route::patch('messages/{userId}/read', [MessageController::class, 'markRead']);
+    Route::post('messages/read',           [MessageController::class, 'markReadAlias']);
     Route::get('conversations',            [MessageController::class, 'conversations']);
+
+    // NDA signing (pairwise per idea)
+    Route::post('nda/sign',                [NdaController::class, 'sign']);
+    Route::get('nda/check',                [NdaController::class, 'check']);
 
     // KYC
     Route::get('kyc',                      [KycController::class, 'show']);
