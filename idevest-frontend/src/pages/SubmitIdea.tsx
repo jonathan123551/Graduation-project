@@ -50,28 +50,32 @@ function parseScoresFromEvaluation(
       : 0;
   };
 
+  // Match BOTH styles: "Innovation Score: 80" (what the system prompt asks for)
+  // and "INNOVATION_SCORE: 80" (legacy underscore form). The previous regex only
+  // matched the underscore form, so every idea came back with all-zero scores
+  // and was auto-"rejected".
   const innovation = getNum(
-    /INNOVATION_SCORE:\s*(\d+)/i
+    /INNOVATION[ _]SCORE:\s*(\d+)/i
   );
 
   const market = getNum(
-    /MARKET_SCORE:\s*(\d+)/i
+    /MARKET[ _]SCORE:\s*(\d+)/i
   );
 
   const execution = getNum(
-    /EXECUTION_SCORE:\s*(\d+)/i
+    /EXECUTION[ _]SCORE:\s*(\d+)/i
   );
 
   const investment = getNum(
-    /INVESTMENT_SCORE:\s*(\d+)/i
+    /INVESTMENT[ _]SCORE:\s*(\d+)/i
   );
 
   const risk = getNum(
-    /RISK_SCORE:\s*(\d+)/i
+    /RISK[ _]SCORE:\s*(\d+)/i
   );
 
   let overall = getNum(
-    /OVERALL_SCORE:\s*(\d+)/i
+    /OVERALL[ _]SCORE:\s*(\d+)/i
   );
 
   if (!overall) {
@@ -84,9 +88,17 @@ function parseScoresFromEvaluation(
     );
   }
 
+  // Honor an explicit "Decision: accepted | needs_improvement | rejected"
+  // line if the model included one. Otherwise fall back to score thresholds.
   let decision = "rejected";
-
-  if (overall >= 75) {
+  const decisionMatch = text.match(
+    /DECISION:\s*(accepted|needs[_ ]improvement|rejected)/i
+  );
+  if (decisionMatch) {
+    decision = decisionMatch[1]
+      .toLowerCase()
+      .replace(" ", "_");
+  } else if (overall >= 75) {
     decision = "accepted";
   } else if (overall >= 50) {
     decision = "needs_improvement";
@@ -432,16 +444,42 @@ export default function SubmitIdea() {
           }
         />
 
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() =>
-            fileInputRef.current?.click()
-          }
-        >
-          <FileUp className="h-4 w-4 me-2" />
-          Upload File
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() =>
+              fileInputRef.current?.click()
+            }
+          >
+            <FileUp className="h-4 w-4 me-2" />
+            {documentFile
+              ? "Change File"
+              : "Upload File"}
+          </Button>
+          {documentFile && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span className="truncate max-w-xs">
+                {documentFile.name}
+              </span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="text-destructive hover:text-destructive"
+                onClick={() => {
+                  setDocumentFile(null);
+                  if (fileInputRef.current) {
+                    fileInputRef.current.value =
+                      "";
+                  }
+                }}
+              >
+                Remove
+              </Button>
+            </div>
+          )}
+        </div>
 
         <Button
           type="submit"
