@@ -56,6 +56,19 @@ class MessageController extends Controller
             'message' => 'Marked as read'
         ]);
     }
+
+    /**
+     * POST /messages/read with body { other_user_id }
+     * Alias of `markRead` for the frontend's MessageThread component.
+     */
+    public function markReadAlias(Request $request)
+    {
+        $data = $request->validate([
+            'other_user_id' => 'required',
+        ]);
+
+        return $this->markRead($request, $data['other_user_id']);
+    }
         //test
     public function conversations(Request $request)
     {
