@@ -15,6 +15,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
         ]);
+
+        // Convert "" -> null and trim string inputs so that the typical frontend
+        // habit of sending empty strings for unfilled optional fields does not
+        // blow up `nullable|integer` / `nullable|numeric` validators with a 500.
+        $middleware->convertEmptyStringsToNull();
+        $middleware->trimStrings();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

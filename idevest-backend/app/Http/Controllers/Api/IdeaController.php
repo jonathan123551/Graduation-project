@@ -99,6 +99,10 @@ class IdeaController extends Controller
             'ai_evaluation' => 'nullable|string',
         ]);
 
+        // Drop nulls so columns with defaults (team_size, ai_score, etc.) keep
+        // their defaults instead of trying to insert NULL into NOT NULL columns.
+        $data = array_filter($data, fn ($v) => $v !== null);
+
         $data['founder_id'] = $request->user()->id;
         $data['status'] = 'published';
 
